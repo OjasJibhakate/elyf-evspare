@@ -2,22 +2,33 @@ import Link from 'next/link';
 import { ArrowRight, Search, Sparkles, PackageCheck, Wrench, Star } from 'lucide-react';
 import ProductCard from '@/components/ProductCard';
 import ProductImage from '@/components/ProductImage';
-import { categories, featuredProducts, newArrivals, allProducts, productsByCategory } from '@/lib/catalog';
+import { getCatalog } from '@/lib/catalog';
 import { store } from '@/lib/config';
 import { inr } from '@/lib/format';
 
-export default function HomePage() {
-  const featured = featuredProducts(8);
-  const fresh = newArrivals(8);
-  const heroPicks = [
-    ...productsByCategory('ev-motors-and-motor-accessories').slice(0, 1),
-    ...productsByCategory('lithium-battery-chargers').slice(0, 1),
-    ...productsByCategory('ev-controllers-and-dc-dc-convertors').slice(0, 1),
-    ...productsByCategory('ev-disc-parts').slice(0, 1),
-  ].filter(Boolean);
+export const revalidate = 300;
 
-  const totalSkus = allProducts.length;
-  const cheapest = Math.min(...allProducts.map((p) => p.price).filter((p) => p > 0));
+export default async function HomePage() {
+  const { products, categories } = await getCatalog();
+
+  const featured = products
+    .filter((p) => p.images.length > 1)
+    .slice()
+    .sort((a, b) => a.name.localeCompare(b.name))
+    .slice(0, 8);
+  const fresh = products.slice().reverse().slice(0, 8);
+
+  const byCategory = (slug, n = 1) => products.filter((p) => p.category === slug).slice(0, n);
+  const heroPicks = [
+    ...byCategory('ev-motors-and-motor-accessories'),
+    ...byCategory('lithium-battery-chargers'),
+    ...byCategory('ev-controllers-and-dc-dc-convertors'),
+    ...byCategory('ev-disc-parts'),
+  ].slice(0, 4);
+
+  const totalSkus = products.length;
+  const prices = products.map((p) => p.price).filter((p) => p > 0);
+  const cheapest = prices.length ? Math.min(...prices) : 0;
 
   return (
     <>

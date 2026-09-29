@@ -3,16 +3,15 @@ import { notFound } from 'next/navigation';
 import { ChevronRight } from 'lucide-react';
 import ProductCard from '@/components/ProductCard';
 import ListingToolbar from '@/components/ListingToolbar';
-import { categories, getCategory, productsByCategory, priceBounds } from '@/lib/catalog';
+import { getCategory, productsByCategory, priceBounds } from '@/lib/catalog';
 
 const PAGE_SIZE = 24;
 
-export function generateStaticParams() {
-  return categories.map((c) => ({ slug: c.slug }));
-}
+export const revalidate = 300;
+export const dynamicParams = true;
 
-export function generateMetadata({ params }) {
-  const category = getCategory(params.slug);
+export async function generateMetadata({ params }) {
+  const category = await getCategory(params.slug);
   if (!category) return { title: 'Category not found' };
   return {
     title: category.name,
@@ -52,12 +51,12 @@ function applyFilters(list, sp) {
   return items;
 }
 
-export default function CategoryPage({ params, searchParams }) {
-  const category = getCategory(params.slug);
+export default async function CategoryPage({ params, searchParams }) {
+  const category = await getCategory(params.slug);
   if (!category) notFound();
 
   const sp = searchParams || {};
-  const all = productsByCategory(params.slug);
+  const all = await productsByCategory(params.slug);
   const filtered = applyFilters(all, sp);
   const page = Math.max(1, Number(sp.page) || 1);
   const visible = filtered.slice(0, page * PAGE_SIZE);

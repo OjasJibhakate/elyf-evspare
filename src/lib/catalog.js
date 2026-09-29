@@ -1,22 +1,99 @@
-import products from '@/data/products.json';
-import categoriesData from '@/data/categories.json';
+import { unstable_cache } from 'next/cache';
+import bundledProducts from '@/data/products.json';
+import bundledCategories from '@/data/categories.json';
+import { sheetCsvUrl, parseCsv, rowsToObjects, buildProducts, buildCategories } from '@/lib/sheet';
 
-export const allProducts = products;
-export const categories = categoriesData;
+const SHEET_URL = process.env.CATALOG_SHEET_URL || '';
+const REVALIDATE_SECONDS = Number(process.env.CATALOG_REVALIDATE_SECONDS || 300);
 
-export function getProduct(slug) {
+/**
+ * Catalogue source.
+ *
+ * By default the store renders the catalogue that ships with the repo
+ * (src/data/products.json). Set CATALOG_SHEET_URL to a Google Sheet id or link
+ * and the store reads products straight from the sheet instead, refreshing
+ * every few minutes — so the shop owner can add or edit products without a
+ * developer or a redeploy.
+ */
+async function loadFromSheet() {
+  const productsRes = await fetch(sheetCsvUrl(SHEET_URL, 'Products'), {
+    next: { revalidate: REVALIDATE_SECONDS },
+  });
+  if (!productsRes.ok) throw new Error(`products sheet responded ${productsRes.status}`);
+  const products = buildProducts(rowsToObjects(parseCsv(await productsRes.text())));
+
+  let categoryRows = [];
+  try {
+    const categoriesRes = await fetch(sheetCsvUrl(SHEET_URL, 'Categories'), {
+      next: { revalidate: REVALIDATE_SECONDS },
+    });
+    if (categoriesRes.ok) {
+      const text = await categoriesRes.text();
+      if (!/^\s*</.test(text)) categoryRows = rowsToObjects(parseCsv(text));
+    }
+  } catch (e) {
+    /* the Categories tab is optional */
+  }
+
+  if (!products.length) throw new Error('products sheet is empty');
+
+  return {
+    products,
+    categories: buildCategories(categoryRows, products),
+    source: 'google-sheet',
+    updatedAt: new Date().toISOString(),
+  };
+}
+
+async function loadBundled() {
+  return {
+    products: bundledProducts,
+    categories: bundledCategories,
+    source: 'bundled',
+    updatedAt: null,
+  };
+}
+
+export const getCatalog = unstable_cache(
+  async () => {
+    if (SHEET_URL) {
+      try {
+        return await loadFromSheet();
+      } catch (error) {
+        console.error('[catalog] falling back to bundled catalogue:', error.message);
+      }
+    }
+    return loadBundled();
+  },
+  ['elyf-catalog'],
+  { revalidate: REVALIDATE_SECONDS, tags: ['catalog'] },
+);
+
+/* ------------------------------------------------------------------ */
+/* helpers — every one resolves the catalogue for the current request   */
+/* ------------------------------------------------------------------ */
+
+export async function getCategories() {
+  return (await getCatalog()).categories;
+}
+
+export async function getProduct(slug) {
+  const { products } = await getCatalog();
   return products.find((p) => p.slug === slug) || null;
 }
 
-export function getCategory(slug) {
+export async function getCategory(slug) {
+  const { categories } = await getCatalog();
   return categories.find((c) => c.slug === slug) || null;
 }
 
-export function productsByCategory(slug) {
+export async function productsByCategory(slug) {
+  const { products } = await getCatalog();
   return products.filter((p) => p.category === slug);
 }
 
-export function featuredProducts(limit = 8) {
+export async function featuredProducts(limit = 8) {
+  const { products } = await getCatalog();
   return products
     .filter((p) => p.images.length > 1)
     .slice()
@@ -24,18 +101,21 @@ export function featuredProducts(limit = 8) {
     .slice(0, limit);
 }
 
-export function newArrivals(limit = 8) {
+export async function newArrivals(limit = 8) {
+  const { products } = await getCatalog();
   return products.slice().reverse().slice(0, limit);
 }
 
-export function relatedProducts(product, limit = 8) {
+export async function relatedProducts(product, limit = 8) {
   if (!product) return [];
+  const { products } = await getCatalog();
   return products
     .filter((p) => p.category === product.category && p.slug !== product.slug)
     .slice(0, limit);
 }
 
-export function searchProducts(query, limit = 40) {
+export async function searchProducts(query, limit = 40) {
+  const { products } = await getCatalog();
   const q = (query || '').trim().toLowerCase();
   if (!q) return [];
   const terms = q.split(/\s+/).filter(Boolean);
@@ -59,8 +139,8 @@ export function searchProducts(query, limit = 40) {
     .map((s) => s.product);
 }
 
-export function quickSearch(query, limit = 6) {
-  return searchProducts(query, limit).map((p) => ({
+export async function quickSearch(query, limit = 6) {
+  return (await searchProducts(query, limit)).map((p) => ({
     name: p.name,
     slug: p.slug,
     price: p.price,
@@ -79,4 +159,14 @@ export function priceBounds(list) {
     if (p.price > max) max = p.price;
   }
   return { min: Math.floor(min), max: Math.ceil(max) };
+}
+
+export async function catalogStats() {
+  const { products, source } = await getCatalog();
+  const prices = products.map((p) => p.price).filter((p) => p > 0);
+  return {
+    totalProducts: products.length,
+    cheapest: prices.length ? Math.min(...prices) : 0,
+    source,
+  };
 }

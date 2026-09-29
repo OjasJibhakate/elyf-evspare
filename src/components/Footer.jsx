@@ -1,11 +1,10 @@
 import Link from 'next/link';
 import { Mail, MapPin, MessageCircle, Phone, Truck, ShieldCheck, BadgeIndianRupee, Clock } from 'lucide-react';
 import { store, trustPoints } from '@/lib/config';
-import categories from '@/data/categories.json';
 
 const trustIcons = [ShieldCheck, BadgeIndianRupee, Truck, Clock];
 
-export default function Footer() {
+export default function Footer({ categories = [] }) {
   return (
     <footer className="mt-16 border-t border-slate-200 bg-slate-50">
       <div className="container">

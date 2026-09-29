@@ -1,7 +1,9 @@
 import Link from 'next/link';
 import { ChevronRight, SearchX } from 'lucide-react';
 import ProductCard from '@/components/ProductCard';
-import { searchProducts, allProducts } from '@/lib/catalog';
+import { searchProducts, getCatalog } from '@/lib/catalog';
+
+export const revalidate = 300;
 
 export async function generateMetadata({ searchParams }) {
   const q = searchParams?.q || '';
@@ -11,10 +13,11 @@ export async function generateMetadata({ searchParams }) {
   };
 }
 
-export default function SearchPage({ searchParams }) {
+export default async function SearchPage({ searchParams }) {
   const q = (searchParams?.q || '').trim();
-  const results = q ? searchProducts(q, 120) : [];
-  const suggestions = allProducts.filter((p) => p.stock > 0).slice(0, 8);
+  const results = q ? await searchProducts(q, 120) : [];
+  const { products } = await getCatalog();
+  const suggestions = products.filter((p) => p.stock > 0).slice(0, 8);
 
   return (
     <div className="container py-8">

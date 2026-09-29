@@ -6,9 +6,8 @@ import { Menu, Phone, ShoppingCart, Truck, X, ShieldCheck, BadgeIndianRupee } fr
 import SearchBox from '@/components/SearchBox';
 import { useCart } from '@/context/CartContext';
 import { store } from '@/lib/config';
-import categories from '@/data/categories.json';
 
-export default function Header() {
+export default function Header({ categories = [] }) {
   const { count, openCart } = useCart();
   const [menuOpen, setMenuOpen] = useState(false);
 

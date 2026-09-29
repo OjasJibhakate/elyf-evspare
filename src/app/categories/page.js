@@ -1,14 +1,18 @@
 import Link from 'next/link';
 import { ChevronRight } from 'lucide-react';
-import { categories } from '@/lib/catalog';
+import { getCategories } from '@/lib/catalog';
 import ProductImage from '@/components/ProductImage';
+
+export const revalidate = 300;
 
 export const metadata = {
   title: 'All categories',
   description: 'Browse every EV spare part category — motors, controllers, chargers, brakes and more.',
 };
 
-export default function CategoriesPage() {
+export default async function CategoriesPage() {
+  const categories = await getCategories();
+
   return (
     <div className="container py-8">
       <nav className="flex items-center gap-1.5 text-xs text-slate-500">

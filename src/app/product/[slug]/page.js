@@ -8,12 +8,12 @@ import { getProduct, getCategory, relatedProducts } from '@/lib/catalog';
 import { markdownToHtml, excerpt } from '@/lib/markdown';
 import { partNumberLabel, stockLabel } from '@/lib/format';
 
-// Catalog is static, so product pages are rendered on demand and cached at the edge.
-export const revalidate = 86400;
+// Catalogue can change at any time (Google Sheet source), so cache for a few minutes.
+export const revalidate = 300;
 export const dynamicParams = true;
 
-export function generateMetadata({ params }) {
-  const product = getProduct(params.slug);
+export async function generateMetadata({ params }) {
+  const product = await getProduct(params.slug);
   if (!product) return { title: 'Product not found' };
   return {
     title: product.name,
@@ -25,12 +25,12 @@ export function generateMetadata({ params }) {
   };
 }
 
-export default function ProductPage({ params }) {
-  const product = getProduct(params.slug);
+export default async function ProductPage({ params }) {
+  const product = await getProduct(params.slug);
   if (!product) notFound();
 
-  const category = getCategory(product.category);
-  const related = relatedProducts(product, 8);
+  const category = await getCategory(product.category);
+  const related = await relatedProducts(product, 8);
   const stock = stockLabel(product.stock);
   const descriptionHtml = markdownToHtml(product.description);
 
