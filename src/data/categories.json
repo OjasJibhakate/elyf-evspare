@@ -1,0 +1,142 @@
+[
+ {
+  "slug": "ev-cables-and-connectors",
+  "name": "EV Cables & Connectors",
+  "icon": "cable",
+  "image": "/img/c/ev-cables-and-connectors.webp",
+  "count": 82
+ },
+ {
+  "slug": "ev-switches-and-flashers-mosfets",
+  "name": "Switches, Flashers & MOSFETs",
+  "icon": "switch",
+  "image": "/img/c/ev-switches-and-flashers-mosfets.webp",
+  "count": 60
+ },
+ {
+  "slug": "ula-ev-scooter-spare-parts",
+  "name": "ULA EV Scooter Spare Parts",
+  "icon": "scooter",
+  "image": "/img/c/ula-ev-scooter-spare-parts.webp",
+  "count": 56
+ },
+ {
+  "slug": "ev-suspension-and-bearings",
+  "name": "Suspension & Bearings",
+  "icon": "spring",
+  "image": "/img/c/ev-suspension-and-bearings.webp",
+  "count": 54
+ },
+ {
+  "slug": "ev-fittings-and-nut-bolts",
+  "name": "Fittings & Nut Bolts",
+  "icon": "bolt",
+  "image": "/img/c/ev-fittings-and-nut-bolts.webp",
+  "count": 52
+ },
+ {
+  "slug": "ev-disc-parts",
+  "name": "Disc Parts",
+  "icon": "disc",
+  "image": "/img/c/ev-disc-parts.webp",
+  "count": 48
+ },
+ {
+  "slug": "ev-brake-and-cable-parts",
+  "name": "Brake & Cable Parts",
+  "icon": "brake",
+  "image": "/img/c/ev-brake-and-cable-parts.webp",
+  "count": 47
+ },
+ {
+  "slug": "sl-and-dl-body-kits-and-body-parts",
+  "name": "SL & DL Body Kits & Body Parts",
+  "icon": "body",
+  "image": "/img/c/sl-and-dl-body-kits-and-body-parts.webp",
+  "count": 47
+ },
+ {
+  "slug": "branded-ev-scooter-spare-parts",
+  "name": "Branded EV Scooter Spare Parts",
+  "icon": "badge",
+  "image": "/img/c/branded-ev-scooter-spare-parts.webp",
+  "count": 40
+ },
+ {
+  "slug": "ev-motors-and-motor-accessories",
+  "name": "EV Motors & Motor Accessories",
+  "icon": "motor",
+  "image": "/img/c/ev-motors-and-motor-accessories.webp",
+  "count": 40
+ },
+ {
+  "slug": "ev-throttles",
+  "name": "EV Throttles",
+  "icon": "throttle",
+  "image": "/img/c/ev-throttles.webp",
+  "count": 34
+ },
+ {
+  "slug": "ev-iron-parts-and-guards",
+  "name": "EV Iron Parts & Guards",
+  "icon": "guard",
+  "image": "/img/c/ev-iron-parts-and-guards.webp",
+  "count": 33
+ },
+ {
+  "slug": "ev-body-kits-and-body-parts",
+  "name": "EV Body Kits & Body Parts",
+  "icon": "body",
+  "image": "/img/c/ev-body-kits-and-body-parts.webp",
+  "count": 31
+ },
+ {
+  "slug": "ev-controllers-and-dc-dc-convertors",
+  "name": "EV Controllers & DC-DC Converters",
+  "icon": "chip",
+  "image": "/img/c/ev-controllers-and-dc-dc-convertors.webp",
+  "count": 31
+ },
+ {
+  "slug": "electric-cycle-and-loader-and-e-rickshaw",
+  "name": "Electric Cycle, Loader & E-Rickshaw",
+  "icon": "truck",
+  "image": "/img/c/electric-cycle-and-loader-and-e-rickshaw.webp",
+  "count": 31
+ },
+ {
+  "slug": "lithium-battery-chargers",
+  "name": "Lithium Battery Chargers",
+  "icon": "battery",
+  "image": "/img/c/lithium-battery-chargers.webp",
+  "count": 30
+ },
+ {
+  "slug": "ev-lock-and-remote-kits",
+  "name": "Locks & Remote Kits",
+  "icon": "lock",
+  "image": "/img/c/ev-lock-and-remote-kits.webp",
+  "count": 22
+ },
+ {
+  "slug": "speedometer-and-glass-cover",
+  "name": "Speedometer & Glass Cover",
+  "icon": "gauge",
+  "image": "/img/c/speedometer-and-glass-cover.webp",
+  "count": 22
+ },
+ {
+  "slug": "ev-oil-seals-and-lubricants",
+  "name": "Oil Seals & Lubricants",
+  "icon": "oil",
+  "image": "/img/c/ev-oil-seals-and-lubricants.webp",
+  "count": 16
+ },
+ {
+  "slug": "lead-acid-ev-chargers",
+  "name": "Lead Acid EV Chargers",
+  "icon": "battery",
+  "image": "/img/c/lead-acid-ev-chargers.webp",
+  "count": 10
+ }
+]
