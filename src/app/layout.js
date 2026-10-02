@@ -1,10 +1,5 @@
 import './globals.css';
 import { Inter } from 'next/font/google';
-import { CartProvider } from '@/context/CartContext';
-import Header from '@/components/Header';
-import Footer from '@/components/Footer';
-import CartDrawer from '@/components/CartDrawer';
-import { getCategories } from '@/lib/catalog';
 import { store } from '@/lib/config';
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter', display: 'swap' });
@@ -37,19 +32,10 @@ export const viewport = {
   initialScale: 1,
 };
 
-export default async function RootLayout({ children }) {
-  const categories = await getCategories();
-
+export default function RootLayout({ children }) {
   return (
     <html lang="en" className={inter.variable}>
-      <body className="flex min-h-screen flex-col">
-        <CartProvider>
-          <Header categories={categories} />
-          <main className="flex-1">{children}</main>
-          <Footer categories={categories} />
-          <CartDrawer />
-        </CartProvider>
-      </body>
+      <body className="antialiased">{children}</body>
     </html>
   );
 }

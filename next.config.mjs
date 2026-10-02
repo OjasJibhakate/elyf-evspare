@@ -3,22 +3,26 @@
 //  Set here (not only in Vercel) so local runs behave like production.
 // ============================================================================
 
-const supabaseHost = (() => {
+// Build the Supabase allow-list from the real URL, keeping the scheme intact —
+// local development runs on http://127.0.0.1, production on https://*.supabase.co.
+const supabaseOrigin = (() => {
   try {
-    return new URL(process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://supabase.co').host;
+    return new URL(process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://supabase.co').origin;
   } catch (e) {
-    return 'supabase.co';
+    return 'https://supabase.co';
   }
 })();
+
+const supabaseWs = supabaseOrigin.replace(/^http/, 'ws');
 
 const csp = [
   "default-src 'self'",
   // Next.js injects inline bootstrap scripts; styles come from Tailwind.
   "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
   "style-src 'self' 'unsafe-inline'",
-  `img-src 'self' data: blob: https://${supabaseHost} https://lh3.googleusercontent.com https://cdn.store.link`,
+  `img-src 'self' data: blob: ${supabaseOrigin} https://lh3.googleusercontent.com https://cdn.store.link`,
   "font-src 'self' data:",
-  `connect-src 'self' https://${supabaseHost} wss://${supabaseHost}`,
+  `connect-src 'self' ${supabaseOrigin} ${supabaseWs}`,
   "frame-ancestors 'none'",
   "form-action 'self'",
   "base-uri 'self'",

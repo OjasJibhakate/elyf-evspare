@@ -2,19 +2,92 @@ import { unstable_cache } from 'next/cache';
 import bundledProducts from '@/data/products.json';
 import bundledCategories from '@/data/categories.json';
 import { sheetCsvUrl, parseCsv, rowsToObjects, buildProducts, buildCategories } from '@/lib/sheet';
+import { createPublicClient, supabaseConfigured } from '@/lib/supabase/public';
 
 const SHEET_URL = process.env.CATALOG_SHEET_URL || '';
 const REVALIDATE_SECONDS = Number(process.env.CATALOG_REVALIDATE_SECONDS || 300);
 
 /**
- * Catalogue source.
+ * Catalogue source, in priority order:
  *
- * By default the store renders the catalogue that ships with the repo
- * (src/data/products.json). Set CATALOG_SHEET_URL to a Google Sheet id or link
- * and the store reads products straight from the sheet instead, refreshing
- * every few minutes — so the shop owner can add or edit products without a
- * developer or a redeploy.
+ *   1. Supabase      — the admin panel writes here (cache tag: 'catalog')
+ *   2. Google Sheet  — optional bulk-import source
+ *   3. bundled JSON  — always works, so the storefront can never go blank
+ *
+ * Everything is cached under the 'catalog' tag, so saving in the admin panel
+ * refreshes the whole storefront immediately.
  */
+
+function toNumber(value, fallback = 0) {
+  const n = Number(value);
+  return Number.isFinite(n) ? n : fallback;
+}
+
+async function loadFromSupabase() {
+  const supabase = createPublicClient();
+  if (!supabase) throw new Error('supabase not configured');
+
+  const [{ data: categoryRows, error: categoryError }, { data: productRows, error: productError }] =
+    await Promise.all([
+      supabase
+        .from('categories')
+        .select('id, name, slug, image_url, position')
+        .eq('is_active', true)
+        .order('position'),
+      supabase
+        .from('products')
+        .select(
+          'id, name, slug, category_id, price, mrp, unit, moq, stock, part_no, description, images, tags',
+        )
+        .eq('is_active', true)
+        .order('name'),
+    ]);
+
+  if (categoryError) throw categoryError;
+  if (productError) throw productError;
+  if (!productRows?.length) throw new Error('no products in database');
+
+  const categoryById = new Map(categoryRows.map((c) => [c.id, c]));
+
+  const products = productRows.map((row) => {
+    const category = categoryById.get(row.category_id);
+    return {
+      id: row.id,
+      name: row.name,
+      slug: row.slug,
+      category: category?.slug || 'uncategorised',
+      categoryName: category?.name || 'Other',
+      price: toNumber(row.price),
+      mrp: row.mrp === null || row.mrp === undefined ? null : toNumber(row.mrp),
+      unit: row.unit || 'PCS',
+      moq: toNumber(row.moq, 1),
+      stock: toNumber(row.stock, 0),
+      partNo: row.part_no || '',
+      images: Array.isArray(row.images) ? row.images : [],
+      description: row.description || '',
+      tags: Array.isArray(row.tags) ? row.tags : [],
+    };
+  });
+
+  const counts = products.reduce((acc, p) => {
+    acc[p.category] = (acc[p.category] || 0) + 1;
+    return acc;
+  }, {});
+
+  const categories = categoryRows
+    .map((c) => ({
+      slug: c.slug,
+      name: c.name,
+      image: c.image_url || '',
+      position: c.position ?? 0,
+      icon: 'box',
+      count: counts[c.slug] || 0,
+    }))
+    .filter((c) => c.count > 0 || c.image);
+
+  return { products, categories, source: 'supabase', updatedAt: new Date().toISOString() };
+}
+
 async function loadFromSheet() {
   const productsRes = await fetch(sheetCsvUrl(SHEET_URL, 'Products'), {
     next: { revalidate: REVALIDATE_SECONDS },
@@ -45,7 +118,7 @@ async function loadFromSheet() {
   };
 }
 
-async function loadBundled() {
+function loadBundled() {
   return {
     products: bundledProducts,
     categories: bundledCategories,
@@ -56,11 +129,18 @@ async function loadBundled() {
 
 export const getCatalog = unstable_cache(
   async () => {
+    if (supabaseConfigured()) {
+      try {
+        return await loadFromSupabase();
+      } catch (error) {
+        console.error('[catalog] Supabase unavailable, falling back:', error.message);
+      }
+    }
     if (SHEET_URL) {
       try {
         return await loadFromSheet();
       } catch (error) {
-        console.error('[catalog] falling back to bundled catalogue:', error.message);
+        console.error('[catalog] sheet failed, falling back:', error.message);
       }
     }
     return loadBundled();
@@ -162,10 +242,11 @@ export function priceBounds(list) {
 }
 
 export async function catalogStats() {
-  const { products, source } = await getCatalog();
+  const { products, categories, source } = await getCatalog();
   const prices = products.map((p) => p.price).filter((p) => p > 0);
   return {
     totalProducts: products.length,
+    totalCategories: categories.length,
     cheapest: prices.length ? Math.min(...prices) : 0,
     source,
   };
