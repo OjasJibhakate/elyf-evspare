@@ -45,6 +45,15 @@ export const contentDefaults = {
       { key: 'new_arrivals', label: 'Newly listed', enabled: true },
     ],
   },
+  // Manually picked products. Empty means "choose automatically", so the home
+  // page is never blank before the owner curates it.
+  hero_products: { items: [] },
+  featured_products: { items: [] },
+};
+
+export const PICKER_LIMITS = {
+  hero_products: 4,
+  featured_products: 8,
 };
 
 function mergeBlock(key, data) {
@@ -72,11 +81,18 @@ async function loadContent() {
     sections.items = contentDefaults.sections.items;
   }
 
+  const heroProducts = mergeBlock('hero_products', byKey.get('hero_products'));
+  const featuredProducts = mergeBlock('featured_products', byKey.get('featured_products'));
+
   return {
     hero: mergeBlock('hero', byKey.get('hero')),
     bulk_banner: mergeBlock('bulk_banner', byKey.get('bulk_banner')),
     trust_points: trust,
     sections,
+    hero_products: { items: Array.isArray(heroProducts.items) ? heroProducts.items : [] },
+    featured_products: {
+      items: Array.isArray(featuredProducts.items) ? featuredProducts.items : [],
+    },
   };
 }
 

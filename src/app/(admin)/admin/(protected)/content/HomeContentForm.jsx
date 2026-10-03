@@ -1,7 +1,8 @@
 'use client';
 
 import { useFormState, useFormStatus } from 'react-dom';
-import { AlertCircle, CheckCircle2, Loader2, Save } from 'lucide-react';
+import { AlertCircle, CheckCircle2, Loader2, Save, Image as ImageIcon, Star, Sparkles } from 'lucide-react';
+import ProductPicker from '@/components/admin/ProductPicker';
 
 function SubmitButton({ label = 'Save home page' }) {
   const { pending } = useFormStatus();
@@ -41,6 +42,51 @@ export default function HomeContentForm({ action, content, store }) {
           <AlertCircle className="h-4 w-4" /> {state.error}
         </p>
       )}
+
+      <section className="card p-5">
+        <h2 className="flex items-center gap-2 text-base font-bold">
+          <Star className="h-4 w-4 text-accent-500" /> Products shown on the home page
+        </h2>
+        <p className="mt-1 text-xs text-slate-500">
+          Pick exactly which products appear. Leave a section empty and the store chooses
+          automatically so the page is never blank.
+        </p>
+
+        <div className="mt-5 grid gap-6 lg:grid-cols-2">
+          <div className="rounded-xl border border-slate-200 p-4">
+            <div className="mb-3 flex items-center gap-2">
+              <Sparkles className="h-4 w-4 text-brand-800" />
+              <h3 className="text-sm font-bold">Hero collage</h3>
+            </div>
+            <ProductPicker
+              name="hero_products"
+              label="The four tiles beside the headline"
+              hint="Square photos look best here."
+              limit={4}
+              initial={content.hero_products.items}
+            />
+          </div>
+
+          <div className="rounded-xl border border-slate-200 p-4">
+            <div className="mb-3 flex items-center gap-2">
+              <ImageIcon className="h-4 w-4 text-brand-800" />
+              <h3 className="text-sm font-bold">Best sellers</h3>
+            </div>
+            <ProductPicker
+              name="featured_products"
+              label="The product grid in the middle of the page"
+              hint="These are the parts you want to push hardest."
+              limit={8}
+              initial={content.featured_products.items}
+            />
+          </div>
+        </div>
+
+        <p className="mt-4 rounded-lg bg-slate-50 p-3 text-xs text-slate-500">
+          The “Newly listed” section always shows the newest products added to the catalogue, so it
+          stays fresh on its own.
+        </p>
+      </section>
 
       <section className="card p-5">
         <h2 className="text-base font-bold">Sections shown on the home page</h2>

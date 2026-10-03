@@ -9,6 +9,18 @@ function text(formData, key, fallback = '') {
   return value === null ? fallback : String(value);
 }
 
+function slugList(formData, key, limit) {
+  try {
+    const parsed = JSON.parse(String(formData.get(key) || '[]'));
+    if (!Array.isArray(parsed)) return [];
+    return parsed
+      .filter((s) => typeof s === 'string' && s.length > 0)
+      .slice(0, limit);
+  } catch (e) {
+    return [];
+  }
+}
+
 export async function saveHomeContent(prevState, formData) {
   const session = await requireStaff();
   if (!session) return { error: 'Not authorised.' };
@@ -66,6 +78,20 @@ export async function saveHomeContent(prevState, formData) {
           enabled: formData.get(`section_${key}_enabled`) === 'on',
         })),
       },
+    },
+    {
+      key: 'hero_products',
+      type: 'products',
+      position: 4,
+      is_active: true,
+      data: { items: slugList(formData, 'hero_products', 4) },
+    },
+    {
+      key: 'featured_products',
+      type: 'products',
+      position: 5,
+      is_active: true,
+      data: { items: slugList(formData, 'featured_products', 8) },
     },
   ];
 

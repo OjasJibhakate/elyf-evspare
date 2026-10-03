@@ -19,20 +19,34 @@ export default async function HomePage() {
   const { hero, bulk_banner: banner } = content;
   const show = (key) => content.sections.items.find((s) => s.key === key)?.enabled !== false;
 
-  const featured = products
-    .filter((p) => p.images.length > 1)
+  const bySlug = new Map(products.map((p) => [p.slug, p]));
+  const pick = (slugs, fallback) => {
+    const chosen = (slugs || []).map((s) => bySlug.get(s)).filter(Boolean);
+    return chosen.length ? chosen : fallback;
+  };
+
+  // Newest first — genuinely "newly listed", not alphabetical.
+  const fresh = products
     .slice()
-    .sort((a, b) => a.name.localeCompare(b.name))
+    .sort((a, b) => String(b.createdAt || '').localeCompare(String(a.createdAt || '')))
     .slice(0, 8);
-  const fresh = products.slice().reverse().slice(0, 8);
 
   const byCategory = (slug, n = 1) => products.filter((p) => p.category === slug).slice(0, n);
-  const heroPicks = [
+  const autoHero = [
     ...byCategory('ev-motors-and-motor-accessories'),
     ...byCategory('lithium-battery-chargers'),
     ...byCategory('ev-controllers-and-dc-dc-convertors'),
     ...byCategory('ev-disc-parts'),
   ].slice(0, 4);
+
+  const autoFeatured = products
+    .filter((p) => p.images.length > 1)
+    .slice()
+    .sort((a, b) => a.name.localeCompare(b.name))
+    .slice(0, 8);
+
+  const heroPicks = pick(content.hero_products.items, autoHero);
+  const featured = pick(content.featured_products.items, autoFeatured);
 
   const totalSkus = products.length;
   const prices = products.map((p) => p.price).filter((p) => p > 0);

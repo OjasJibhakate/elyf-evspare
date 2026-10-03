@@ -37,7 +37,7 @@ async function loadFromSupabase() {
       supabase
         .from('products')
         .select(
-          'id, name, slug, category_id, price, mrp, unit, moq, stock, part_no, description, images, tags',
+          'id, name, slug, category_id, price, mrp, unit, moq, stock, part_no, description, images, tags, created_at',
         )
         .eq('is_active', true)
         .order('name'),
@@ -66,6 +66,7 @@ async function loadFromSupabase() {
       images: Array.isArray(row.images) ? row.images : [],
       description: row.description || '',
       tags: Array.isArray(row.tags) ? row.tags : [],
+      createdAt: row.created_at || null,
     };
   });
 
