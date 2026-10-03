@@ -112,6 +112,23 @@ for (const table of ['products', 'categories', 'orders', 'content_blocks', 'page
   console.log(`  ${table.padEnd(16)} ${error ? `error: ${short(error.message)}` : count}`);
 }
 
+// --------------------------------------------------------------- accounts
+console.log('\n=== Staff accounts ===');
+{
+  const { data, error } = await admin.from('profiles').select('email, role, is_blocked');
+  if (error) {
+    console.log(`  error: ${short(error.message)}`);
+  } else if (!data.length) {
+    console.log('  none yet — create one with scripts/create-admin.mjs');
+  } else {
+    for (const row of data) {
+      console.log(`  ${row.role.padEnd(10)} ${row.email}${row.is_blocked ? '  (blocked)' : ''}`);
+    }
+    const admins = data.filter((r) => r.role === 'admin' && !r.is_blocked).length;
+    if (admins === 0) console.log('\n  WARNING: no active admin — nobody can sign in to /admin');
+  }
+}
+
 console.log(
   failures
     ? `\n${failures} check(s) failed — fix these before continuing.\n`
