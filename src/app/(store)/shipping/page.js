@@ -1,14 +1,17 @@
 import Link from 'next/link';
 import { Truck, PackageCheck, RotateCcw, BadgeIndianRupee } from 'lucide-react';
-import { shippingMethods, store } from '@/lib/config';
+import { getSettings } from '@/lib/settings';
 
 export const metadata = {
   title: 'Shipping & returns',
   description: 'Dispatch timelines, courier partners and replacement policy.',
 };
 
-export default function ShippingPage() {
-  const delivery = shippingMethods.find((m) => m.id === 'delivery');
+export const revalidate = 300;
+
+export default async function ShippingPage() {
+  const { store, shipping } = await getSettings();
+  const delivery = shipping.find((m) => m.id === 'delivery');
 
   return (
     <div className="container py-10">

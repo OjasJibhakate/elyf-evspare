@@ -5,11 +5,11 @@ import { useState } from 'react';
 import { Menu, Phone, ShoppingCart, Truck, X, ShieldCheck, BadgeIndianRupee } from 'lucide-react';
 import SearchBox from '@/components/SearchBox';
 import { useCart } from '@/context/CartContext';
-import { store } from '@/lib/config';
 
-export default function Header({ categories = [] }) {
+export default function Header({ categories = [], settings }) {
   const { count, openCart } = useCart();
   const [menuOpen, setMenuOpen] = useState(false);
+  const store = settings?.store || { name: 'ELYF EVSPARE', tagline: '', phone: '', phoneRaw: '' };
 
   return (
     <>

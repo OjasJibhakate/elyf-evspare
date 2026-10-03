@@ -6,9 +6,10 @@ import { CheckCircle2, MessageCircle, Printer, Truck, MapPin, Wallet, PackageChe
 import ProductImage from '@/components/ProductImage';
 import { getOrder, orderToWhatsApp } from '@/lib/orders';
 import { inr } from '@/lib/format';
-import { store } from '@/lib/config';
+import { useCart } from '@/context/CartContext';
 
 export default function OrderPage({ params }) {
+  const { store } = useCart();
   const [order, setOrder] = useState(null);
   const [loaded, setLoaded] = useState(false);
 

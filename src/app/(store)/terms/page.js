@@ -1,10 +1,12 @@
 import Link from 'next/link';
-import { store } from '@/lib/config';
+import { getSettings } from '@/lib/settings';
 
 export const metadata = {
   title: 'Terms & conditions',
   description: 'Pricing, GST, minimum order quantities and order confirmation terms.',
 };
+
+export const revalidate = 300;
 
 const sections = [
   {
@@ -45,7 +47,9 @@ const sections = [
   },
 ];
 
-export default function TermsPage() {
+export default async function TermsPage() {
+  const { store } = await getSettings();
+
   return (
     <div className="container py-10">
       <div className="mx-auto max-w-3xl">

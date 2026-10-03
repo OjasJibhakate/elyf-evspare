@@ -7,10 +7,10 @@ import { useCart } from '@/context/CartContext';
 import QuantityStepper from '@/components/QuantityStepper';
 import ProductImage from '@/components/ProductImage';
 import { inr } from '@/lib/format';
-import { store } from '@/lib/config';
 
 export default function CartDrawer() {
-  const { isOpen, closeCart, items, setQty, remove, subtotal, gst, shipping, total, lines } = useCart();
+  const { isOpen, closeCart, items, setQty, remove, subtotal, gst, shipping, total, lines, store } =
+    useCart();
   const router = useRouter();
 
   if (!isOpen) return null;

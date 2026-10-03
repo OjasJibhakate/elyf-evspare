@@ -1,7 +1,7 @@
 'use client';
 
 import { createContext, useContext, useEffect, useMemo, useReducer, useState, useCallback } from 'react';
-import { gstRate, shippingMethods } from '@/lib/config';
+import { settingsDefaults, gstRateFor } from '@/lib/settings-shared';
 
 const CartContext = createContext(null);
 const STORAGE_KEY = 'elyf.cart.v1';
@@ -53,7 +53,11 @@ function reducer(state, action) {
   }
 }
 
-export function CartProvider({ children }) {
+export function CartProvider({ children, settings }) {
+  // Settings come from the database (editable in /admin/settings) and fall back
+  // to the values in src/lib/config.js when the database is not configured.
+  const resolved = settings || settingsDefaults;
+
   const [items, dispatch] = useReducer(reducer, []);
   const [isOpen, setOpen] = useState(false);
   const [ready, setReady] = useState(false);
@@ -95,22 +99,36 @@ export function CartProvider({ children }) {
   }, []);
 
   const value = useMemo(() => {
+    const activeShipping = resolved.shipping.filter((m) => m.enabled !== false);
+    const method =
+      activeShipping.find((m) => m.id === shippingId) || activeShipping[0] || resolved.shipping[0];
+
     const subtotal = items.reduce((sum, i) => sum + lineTotal(i), 0);
-    const gst = items.reduce((sum, i) => sum + lineTotal(i) * gstRate(i.category), 0);
+    const gstAmount = items.reduce(
+      (sum, i) => sum + lineTotal(i) * gstRateFor(i.category, resolved.gst),
+      0,
+    );
     const count = items.reduce((sum, i) => sum + i.qty, 0);
     const lines = items.length;
-    const method = shippingMethods.find((m) => m.id === shippingId) || shippingMethods[0];
-    const gross = subtotal + gst;
+    const gross = subtotal + gstAmount;
     const shipping =
-      method.rate === 0 || (method.freeAbove && gross >= method.freeAbove) ? 0 : method.rate;
+      method && (method.rate === 0 || (method.freeAbove && gross >= method.freeAbove))
+        ? 0
+        : method?.rate || 0;
     const total = gross + shipping;
 
     return {
+      settings: resolved,
+      store: resolved.store,
+      gst: resolved.gst,
+      shippingMethods: activeShipping.length ? activeShipping : resolved.shipping,
+      paymentMethods: resolved.payments.filter((p) => p.enabled !== false),
+      storeOpen: resolved.storeOpen,
       items,
       count,
       lines,
       subtotal,
-      gst,
+      gst: gstAmount,
       shipping,
       total,
       shippingId,
@@ -124,7 +142,7 @@ export function CartProvider({ children }) {
       remove: (slug) => dispatch({ type: 'remove', slug }),
       clear: () => dispatch({ type: 'clear' }),
     };
-  }, [items, isOpen, shippingId, add]);
+  }, [items, isOpen, shippingId, add, resolved]);
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;
 }

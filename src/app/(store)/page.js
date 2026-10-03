@@ -3,13 +3,13 @@ import { ArrowRight, Search, Sparkles, PackageCheck, Wrench, Star } from 'lucide
 import ProductCard from '@/components/ProductCard';
 import ProductImage from '@/components/ProductImage';
 import { getCatalog } from '@/lib/catalog';
-import { store } from '@/lib/config';
+import { getSettings } from '@/lib/settings';
 import { inr } from '@/lib/format';
 
 export const revalidate = 300;
 
 export default async function HomePage() {
-  const { products, categories } = await getCatalog();
+  const [{ products, categories }, { store }] = await Promise.all([getCatalog(), getSettings()]);
 
   const featured = products
     .filter((p) => p.images.length > 1)

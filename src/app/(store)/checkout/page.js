@@ -18,7 +18,6 @@ import {
 import { useCart } from '@/context/CartContext';
 import ProductImage from '@/components/ProductImage';
 import { inr } from '@/lib/format';
-import { paymentMethods, shippingMethods, store } from '@/lib/config';
 import { newOrderId, saveOrder } from '@/lib/orders';
 
 const initialForm = {
@@ -36,7 +35,7 @@ const initialForm = {
 
 export default function CheckoutPage() {
   const router = useRouter();
-  const { items, subtotal, gst, shipping, total, shippingId, setShippingId, clear, count } = useCart();
+  const { items, subtotal, gst, shipping, total, shippingId, setShippingId, clear, count, shippingMethods, paymentMethods, store, storeOpen } = useCart();
   const [form, setForm] = useState(initialForm);
   const [payment, setPayment] = useState('cod');
   const [errors, setErrors] = useState({});
@@ -85,6 +84,33 @@ export default function CheckoutPage() {
     saveOrder(order);
     clear();
     router.push(`/order/${order.id}`);
+  }
+
+  if (!storeOpen) {
+    return (
+      <div className="container py-16">
+        <div className="card mx-auto max-w-lg p-10 text-center">
+          <h1 className="text-xl font-bold">We are not accepting orders right now</h1>
+          <p className="mt-2 text-sm text-slate-500">
+            The store is temporarily closed for new orders. Your cart is saved — please try again
+            later, or message us on WhatsApp and we will sort it out.
+          </p>
+          <div className="mt-5 flex justify-center gap-2">
+            <a
+              href={`https://wa.me/${store.whatsapp}`}
+              target="_blank"
+              rel="noreferrer"
+              className="btn-brand"
+            >
+              Message us on WhatsApp
+            </a>
+            <Link href="/" className="btn-outline">
+              Go home
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   if (items.length === 0) {

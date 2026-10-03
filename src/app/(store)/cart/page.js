@@ -6,7 +6,6 @@ import { useCart } from '@/context/CartContext';
 import QuantityStepper from '@/components/QuantityStepper';
 import ProductImage from '@/components/ProductImage';
 import { inr } from '@/lib/format';
-import { store, shippingMethods } from '@/lib/config';
 
 export default function CartPage() {
   const {
@@ -21,6 +20,8 @@ export default function CartPage() {
     count,
     shippingId,
     setShippingId,
+    shippingMethods,
+    store,
   } = useCart();
 
   if (items.length === 0) {

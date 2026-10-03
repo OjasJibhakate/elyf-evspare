@@ -1,13 +1,16 @@
 import Link from 'next/link';
 import { Mail, MapPin, MessageCircle, Phone, Clock } from 'lucide-react';
-import { store } from '@/lib/config';
+import { getSettings } from '@/lib/settings';
 
 export const metadata = {
   title: 'Contact us',
   description: 'Call or WhatsApp us for part availability, fitment help and bulk quotes.',
 };
 
-export default function ContactPage() {
+export const revalidate = 300;
+
+export default async function ContactPage() {
+  const { store } = await getSettings();
   return (
     <div className="container py-10">
       <div className="mx-auto max-w-4xl">

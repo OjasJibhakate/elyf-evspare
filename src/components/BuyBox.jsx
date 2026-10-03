@@ -5,10 +5,9 @@ import { ShoppingCart, MessageCircle, Truck, ShieldCheck, PackageCheck } from 'l
 import QuantityStepper from '@/components/QuantityStepper';
 import { useCart } from '@/context/CartContext';
 import { inr, stockPhrase } from '@/lib/format';
-import { store } from '@/lib/config';
 
 export default function BuyBox({ product }) {
-  const { add } = useCart();
+  const { add, store } = useCart();
   const [qty, setQty] = useState(product.moq || 1);
   const lineTotal = product.price * qty;
 

@@ -1,15 +1,17 @@
 import Link from 'next/link';
 import { Mail, MapPin, MessageCircle, Phone, Truck, ShieldCheck, BadgeIndianRupee, Clock } from 'lucide-react';
-import { store, trustPoints } from '@/lib/config';
+import { trustPoints } from '@/lib/config';
 
 const trustIcons = [ShieldCheck, BadgeIndianRupee, Truck, Clock];
 
-export default function Footer({ categories = [] }) {
+export default function Footer({ categories = [], settings }) {
+  const store = settings?.store || { name: 'ELYF EVSPARE', phone: '', phoneRaw: '', email: '', address: '', whatsapp: '' };
+  const points = settings?.trustPoints?.length ? settings.trustPoints : trustPoints;
   return (
     <footer className="mt-16 border-t border-slate-200 bg-slate-50">
       <div className="container">
         <div className="grid gap-4 border-b border-slate-200 py-8 sm:grid-cols-2 lg:grid-cols-4">
-          {trustPoints.map((point, i) => {
+          {points.map((point, i) => {
             const Icon = trustIcons[i % trustIcons.length];
             return (
               <div key={point.title} className="flex items-start gap-3">
@@ -31,7 +33,12 @@ export default function Footer({ categories = [] }) {
               <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-brand-800 text-sm font-bold text-white">
                 EV
               </span>
-              <span className="text-sm font-bold text-slate-900">{store.name}</span>
+              <span>
+                <span className="block text-sm font-bold text-slate-900">{store.name}</span>
+                {store.tagline && (
+                  <span className="block text-xs text-slate-500">{store.tagline}</span>
+                )}
+              </span>
             </div>
             <p className="mt-3 text-sm leading-6 text-slate-600">
               Wholesale supplier of electric scooter spare parts — controllers, motors, chargers,
