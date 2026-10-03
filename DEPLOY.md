@@ -20,7 +20,7 @@ You need: a Supabase account (free) and your Vercel project.
 ```powershell
 cd C:\Users\VICTUS\web_scrapper\elyf-store
 npx supabase login
-npx supabase link --project-ref <your-project-ref>
+npx supabase link --heuvtgojmczmnpewtzlq <your-heuvtgojmczmnpewtzlq>
 npx supabase db push
 ```
 
