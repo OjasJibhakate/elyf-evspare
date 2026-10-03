@@ -4,9 +4,9 @@ import { ArrowLeft, MessageCircle, Phone, Mail, MapPin, Receipt } from 'lucide-r
 import { createClient } from '@/lib/supabase/server';
 import { getSettings } from '@/lib/settings';
 import { inr } from '@/lib/format';
-import { StatusForm, NotesForm } from '../OrderForms';
-import { updateOrderStatus, saveAdminNotes } from '../actions';
-import { STATUS_LABEL, STATUS_STYLE, formatDate } from '../status';
+import { StatusForm, NotesForm, TrackingForm } from '../OrderForms';
+import { updateOrderStatus, saveAdminNotes, saveTracking } from '../actions';
+import { STATUS_LABEL, STATUS_STYLE, formatDate } from '@/lib/order-status';
 
 export const dynamic = 'force-dynamic';
 export const metadata = { title: 'Order', robots: { index: false } };
@@ -121,6 +121,17 @@ export default async function AdminOrderPage({ params }) {
             </p>
             <div className="mt-4">
               <StatusForm action={updateOrderStatus.bind(null, order.id)} order={order} />
+            </div>
+          </section>
+
+          <section className="card p-5">
+            <h2 className="text-base font-bold">Delivery tracking</h2>
+            <p className="mt-1 text-xs text-slate-500">
+              Fill this in once the parcel is with the courier. The customer sees it on their
+              order page under My account.
+            </p>
+            <div className="mt-4">
+              <TrackingForm action={saveTracking.bind(null, order.id)} order={order} />
             </div>
           </section>
 

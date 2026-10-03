@@ -20,12 +20,30 @@ You need: a Supabase account (free) and your Vercel project.
 ```powershell
 cd C:\Users\VICTUS\web_scrapper\elyf-store
 npx supabase login
-npx supabase link --heuvtgojmczmnpewtzlq <your-heuvtgojmczmnpewtzlq>
+npx supabase link --project-ref heuvtgojmczmnpewtzlq
 npx supabase db push
 ```
 
 Project ref is in the dashboard URL: `supabase.com/dashboard/project/<THIS>`.
-This applies both migrations — tables, roles, row level security, audit log, storage bucket.
+This applies all three migrations — tables, roles, row level security, audit log, storage bucket.
+
+## 2b. Supabase auth settings — one toggle
+
+**Authentication → Sign In / Providers → Email → turn "Confirm email" OFF.**
+
+Supabase's built-in mail sender only allows a few emails per hour and is meant for
+testing. With confirmation on, customers sign up and simply never receive the link, so
+they can never sign in — and it looks like your site is broken.
+
+What you give up: email addresses are not verified. That is exactly why an account only
+ever shows orders placed **while signed in**. Nobody can claim a stranger's guest orders
+by typing their email at signup.
+
+When you have a domain, set up custom SMTP (Resend, Brevo and Postmark all have free
+tiers), turn confirmation back on, and this is solved properly.
+
+⚠️ Supabase rejects placeholder email domains like `example.com` and `.test` at signup.
+That is their anti-junk protection and it does not affect real customers.
 
 ## 3. Copy the keys
 

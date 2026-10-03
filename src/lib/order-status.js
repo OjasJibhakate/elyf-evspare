@@ -18,6 +18,23 @@ export const STATUS_STYLE = {
   cancelled: 'bg-rose-50 text-rose-700',
 };
 
+/** What the customer is told each status means. */
+export const STATUS_NOTE = {
+  new: 'We have your order and will confirm it shortly.',
+  confirmed: 'Confirmed — we are preparing your parts.',
+  packed: 'Packed and waiting for the courier.',
+  shipped: 'On its way to you.',
+  delivered: 'Delivered. Thank you for your order.',
+  cancelled: 'This order was cancelled.',
+};
+
+/** The happy path, in order. Cancelled sits outside it. */
+export const PROGRESS = ['new', 'confirmed', 'packed', 'shipped', 'delivered'];
+
+export function progressIndex(status) {
+  return PROGRESS.indexOf(status);
+}
+
 export function formatDate(value) {
   if (!value) return '—';
   return new Date(value).toLocaleString('en-IN', {

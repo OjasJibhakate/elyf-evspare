@@ -193,7 +193,40 @@ console.log('\n5. Direct database insert is blocked');
   check('browser cannot insert an order directly', !!error, 'insert succeeded!');
 }
 
-console.log('\n6. Free delivery threshold');
+console.log('\n6. Accounts do not open a hole');
+
+{
+  // This request carries no session cookie, so it must be stored as a guest
+  // order. If a customer_id ever showed up here, the server would be trusting
+  // something from the request body.
+  const guest = await postOrder({
+    items: [{ slug: product.slug, qty: product.moq }],
+    customer,
+    shipping: { id: 'delivery' },
+    payment: { id: 'cod' },
+    // Deliberately trying to file this under someone else's account.
+    customer_id: '00000000-0000-0000-0000-000000000001',
+    customerId: '00000000-0000-0000-0000-000000000001',
+  });
+
+  if (guest.status !== 201) {
+    check('a guest can still order', false, `status ${guest.status}`);
+  } else {
+    const { data: stored } = await db
+      .from('orders')
+      .select('customer_id')
+      .eq('id', guest.data.id)
+      .single();
+    check(
+      'a guest order is stored with no customer attached',
+      stored?.customer_id === null,
+      `customer_id is ${stored?.customer_id}`,
+    );
+    await db.from('orders').delete().eq('id', guest.data.id);
+  }
+}
+
+console.log('\n7. Free delivery threshold');
 
 {
   const { data: settings } = await db.from('site_settings').select('data').eq('id', 1).single();

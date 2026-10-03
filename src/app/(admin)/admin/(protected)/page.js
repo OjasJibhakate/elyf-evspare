@@ -11,7 +11,7 @@ import {
 } from 'lucide-react';
 import { createClient } from '@/lib/supabase/server';
 import { inr } from '@/lib/format';
-import { STATUS_LABEL, STATUS_STYLE, formatDate } from './orders/status';
+import { STATUS_LABEL, STATUS_STYLE, formatDate } from '@/lib/order-status';
 
 export const dynamic = 'force-dynamic';
 

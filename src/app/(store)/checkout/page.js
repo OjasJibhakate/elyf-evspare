@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   ArrowLeft,
   BadgeIndianRupee,
@@ -19,6 +19,7 @@ import { useCart } from '@/context/CartContext';
 import ProductImage from '@/components/ProductImage';
 import FreeDeliveryNote from '@/components/FreeDeliveryNote';
 import { shippingFor } from '@/lib/config';
+import { createClient } from '@/lib/supabase/client';
 import { inr } from '@/lib/format';
 
 const initialForm = {
@@ -42,6 +43,41 @@ export default function CheckoutPage() {
   const [errors, setErrors] = useState({});
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [account, setAccount] = useState(null);
+
+  // Signed-in customers get their details filled in. Guests are untouched.
+  useEffect(() => {
+    const supabase = createClient();
+
+    (async () => {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('full_name, email, phone, business_name, gstin, default_address')
+        .eq('id', user.id)
+        .maybeSingle();
+
+      setAccount(profile?.email || user.email || '');
+
+      const addr = profile?.default_address || {};
+      setForm((f) => ({
+        ...f,
+        name: f.name || profile?.full_name || '',
+        email: f.email || profile?.email || user.email || '',
+        phone: f.phone || profile?.phone || '',
+        business: f.business || profile?.business_name || '',
+        gstin: f.gstin || profile?.gstin || '',
+        address: f.address || addr.line || '',
+        city: f.city || addr.city || '',
+        state: f.state || addr.state || '',
+        zip: f.zip || addr.zip || '',
+      }));
+    })();
+  }, []);
 
   const method = shippingMethods.find((m) => m.id === shippingId) || shippingMethods[0];
   const needsAddress = method.id !== 'pickup';
@@ -151,8 +187,31 @@ export default function CheckoutPage() {
 
       <h1 className="mt-4 text-2xl font-bold sm:text-3xl">Checkout</h1>
       <p className="mt-1 text-sm text-slate-500">
-        {count} units in {items.length} {items.length === 1 ? 'line' : 'lines'} · no account needed
+        {count} units in {items.length} {items.length === 1 ? 'line' : 'lines'}
+        {account ? '' : ' · no account needed'}
       </p>
+
+      {account ? (
+        <p className="mt-3 inline-flex items-center gap-2 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs font-medium text-emerald-800">
+          <CheckCircle2 className="h-3.5 w-3.5" />
+          Signed in as {account} — this order will appear in your account.
+        </p>
+      ) : (
+        <div className="mt-3 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-brand-100 bg-brand-50/60 px-4 py-3">
+          <p className="text-xs text-slate-600">
+            <span className="font-semibold text-slate-800">Ordering again?</span> Create an account
+            for order history, delivery tracking and one-tap checkout.
+          </p>
+          <span className="flex shrink-0 gap-2">
+            <Link href="/login?next=%2Fcheckout" className="btn-outline px-3 py-1.5 text-xs">
+              Sign in
+            </Link>
+            <Link href="/signup?next=%2Fcheckout" className="btn-brand px-3 py-1.5 text-xs">
+              Create account
+            </Link>
+          </span>
+        </div>
+      )}
 
       <form onSubmit={placeOrder} className="mt-6 grid gap-8 lg:grid-cols-[minmax(0,1fr)_380px]">
         <div className="space-y-6">

@@ -1,8 +1,10 @@
 'use client';
 
-import { createContext, useContext, useEffect, useMemo, useReducer, useState, useCallback } from 'react';
+import { createContext, useContext, useEffect, useMemo, useReducer, useRef, useState, useCallback } from 'react';
 import { settingsDefaults, gstRateFor } from '@/lib/settings-shared';
 import { shippingFor, freeDeliveryGap } from '@/lib/config';
+import { createClient } from '@/lib/supabase/client';
+import { mergeCarts, readRemoteCart, writeRemoteCart } from '@/lib/cart-sync';
 
 const CartContext = createContext(null);
 const STORAGE_KEY = 'elyf.cart.v1';
@@ -64,6 +66,14 @@ export function CartProvider({ children, settings }) {
   const [ready, setReady] = useState(false);
   const [shippingId, setShippingId] = useState('delivery');
 
+  // Read inside effects that must not re-run every time the cart changes.
+  const itemsRef = useRef(items);
+  const userRef = useRef(null);
+
+  useEffect(() => {
+    itemsRef.current = items;
+  }, [items]);
+
   useEffect(() => {
     try {
       const raw = window.localStorage.getItem(STORAGE_KEY);
@@ -75,6 +85,45 @@ export function CartProvider({ children, settings }) {
     }
     setReady(true);
   }, []);
+
+  // ---- account cart sync ---------------------------------------------------
+  // Runs for signed-in customers only. Guests keep working exactly as before,
+  // straight out of localStorage.
+  useEffect(() => {
+    const supabase = createClient();
+    let cancelled = false;
+
+    const { data } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (cancelled) return;
+
+      userRef.current = session?.user || null;
+      if (!session?.user) return;
+      if (event !== 'INITIAL_SESSION' && event !== 'SIGNED_IN') return;
+
+      const remote = await readRemoteCart(session.user.id);
+      if (cancelled) return;
+
+      const merged = mergeCarts(itemsRef.current, remote);
+      dispatch({ type: 'hydrate', items: merged });
+      if (merged.length !== remote.length) {
+        writeRemoteCart(session.user.id, merged);
+      }
+    });
+
+    return () => {
+      cancelled = true;
+      data.subscription.unsubscribe();
+    };
+  }, []);
+
+  // Save changes back, debounced so dragging a quantity stepper is one write.
+  useEffect(() => {
+    if (!ready || !userRef.current) return;
+    const timer = setTimeout(() => {
+      writeRemoteCart(userRef.current.id, items);
+    }, 800);
+    return () => clearTimeout(timer);
+  }, [items, ready]);
 
   useEffect(() => {
     if (!ready) return;

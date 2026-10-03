@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { Search, ShoppingBag } from 'lucide-react';
 import { createClient } from '@/lib/supabase/server';
 import { inr } from '@/lib/format';
-import { STATUSES, STATUS_LABEL, STATUS_STYLE, formatDate } from './status';
+import { STATUSES, STATUS_LABEL, STATUS_STYLE, formatDate } from '@/lib/order-status';
 
 export const dynamic = 'force-dynamic';
 export const metadata = { title: 'Orders', robots: { index: false } };

@@ -192,6 +192,69 @@ if (orderError) {
   await admin.from('orders').delete().eq('id', orderId);
 }
 
+console.log('\n4. Saved cart');
+
+{
+  const items = [{ slug: 'x', name: 'Test', price: 10, qty: 3, moq: 1, unit: 'PCS' }];
+
+  const { error: saveError } = await userA
+    .from('carts')
+    .upsert({ user_id: idA, items }, { onConflict: 'user_id' });
+  check('customer can save their own cart', !saveError, saveError?.message);
+
+  const { data: ownRead } = await userA.from('carts').select('items').eq('user_id', idA);
+  check('customer can read their own cart', ownRead?.length === 1, `got ${ownRead?.length} rows`);
+
+  const { data: otherRead } = await userB.from('carts').select('items').eq('user_id', idA);
+  check('another customer cannot read that cart', !otherRead || otherRead.length === 0);
+
+  const { data: anonRead } = await anon.from('carts').select('items');
+  check('a guest cannot read any cart', !anonRead || anonRead.length === 0);
+
+  // B writing a row that claims to belong to A must fail the WITH CHECK.
+  const { error: hijack } = await userB
+    .from('carts')
+    .upsert({ user_id: idA, items: [{ slug: 'hacked', qty: 99 }] }, { onConflict: 'user_id' });
+  const { data: after } = await admin.from('carts').select('items').eq('user_id', idA).single();
+  const untouched = after?.items?.[0]?.slug === 'x' && Number(after?.items?.[0]?.qty) === 3;
+  check(
+    'another customer cannot overwrite it',
+    !!hijack || untouched,
+    'the cart was overwritten!',
+  );
+
+  await admin.from('carts').delete().eq('user_id', idA);
+}
+
+console.log('\n5. Profile edits');
+
+{
+  const { error } = await userA
+    .from('profiles')
+    .update({ full_name: 'Updated Name', business_name: 'ACME' })
+    .eq('id', idA);
+  const { data: after } = await admin
+    .from('profiles')
+    .select('full_name, business_name')
+    .eq('id', idA)
+    .single();
+  check(
+    'customer can edit their own details',
+    !error && after?.full_name === 'Updated Name',
+    error?.message || `name is ${after?.full_name}`,
+  );
+}
+
+{
+  const { error } = await userA.from('profiles').update({ is_blocked: true }).eq('id', idA);
+  const { data: after } = await admin.from('profiles').select('is_blocked').eq('id', idA).single();
+  check(
+    'customer cannot block or unblock themselves',
+    !!error || after?.is_blocked === false,
+    'is_blocked was changed!',
+  );
+}
+
 console.log('\nCleaning up…');
 await admin.auth.admin.deleteUser(idA);
 await admin.auth.admin.deleteUser(idB);

@@ -2,7 +2,7 @@
 
 import { useFormState, useFormStatus } from 'react-dom';
 import { AlertCircle, CheckCircle2, Loader2 } from 'lucide-react';
-import { STATUSES, STATUS_LABEL } from './status';
+import { STATUSES, STATUS_LABEL } from '@/lib/order-status';
 
 function Submit({ label }) {
   const { pending } = useFormStatus();
@@ -80,6 +80,58 @@ export function NotesForm({ action, order }) {
       {state?.ok && <p className="text-xs text-emerald-700">Notes saved.</p>}
       {state?.error && <p className="text-xs text-rose-600">{state.error}</p>}
       <Submit label="Save notes" />
+    </form>
+  );
+}
+
+export function TrackingForm({ action, order }) {
+  const [state, formAction] = useFormState(action, {});
+
+  return (
+    <form action={formAction} className="space-y-3">
+      <div className="grid gap-3 sm:grid-cols-2">
+        <div>
+          <label className="label" htmlFor="courier_name">
+            Courier
+          </label>
+          <input
+            id="courier_name"
+            name="courier_name"
+            defaultValue={order.courier_name || ''}
+            className="input"
+            placeholder="DTDC, BlueDart, Delhivery…"
+          />
+        </div>
+        <div>
+          <label className="label" htmlFor="tracking_no">
+            Tracking / AWB number
+          </label>
+          <input
+            id="tracking_no"
+            name="tracking_no"
+            defaultValue={order.tracking_no || ''}
+            className="input"
+            placeholder="AWB 123456789"
+          />
+        </div>
+      </div>
+
+      <p className="text-xs text-slate-500">
+        Both fields appear on the customer&apos;s order page as soon as you save.
+      </p>
+
+      {state?.ok && (
+        <p className="flex items-center gap-2 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-800">
+          <CheckCircle2 className="h-4 w-4" /> Saved — the customer can see this now.
+        </p>
+      )}
+      {state?.error && (
+        <p className="flex items-center gap-2 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">
+          <AlertCircle className="h-4 w-4" /> {state.error}
+        </p>
+      )}
+
+      <Submit label="Save tracking" />
     </form>
   );
 }

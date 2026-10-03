@@ -34,7 +34,7 @@ function clean(value, max = 200) {
   return String(value ?? '').trim().slice(0, max);
 }
 
-export async function createOrder(payload) {
+export async function createOrder(payload, userId = null) {
   const settings = await getSettings();
 
   if (!settings.storeOpen) {
@@ -156,6 +156,9 @@ export async function createOrder(payload) {
       shipping: shippingCost,
       total,
       status: 'new',
+      // Taken from the verified session cookie, never from the request body —
+      // otherwise anyone could file an order under someone else's account.
+      customer_id: userId || null,
     })
     .select('id, order_no, lookup_token, created_at')
     .single();
