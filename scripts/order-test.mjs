@@ -5,23 +5,15 @@
  *
  * Requires the app to be running (npm start) and the catalogue seeded.
  */
-import { readFileSync } from 'node:fs';
 import { createClient } from '@supabase/supabase-js';
+import { loadEnv, assertConfigured } from './_env.mjs';
 
 const BASE = process.env.TEST_BASE_URL || 'http://localhost:3200';
 
-const env = {};
-for (const line of readFileSync('.env.local', 'utf8').split('\n')) {
-  const t = line.trim();
-  if (!t || t.startsWith('#')) continue;
-  const i = t.indexOf('=');
-  if (i === -1) continue;
-  env[t.slice(0, i).trim()] = t.slice(i + 1).trim();
-}
+const loaded = loadEnv();
+assertConfigured(loaded);
 
-const db = createClient(env.NEXT_PUBLIC_SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY, {
-  auth: { persistSession: false },
-});
+const db = createClient(loaded.url, loaded.key, { auth: { persistSession: false } });
 
 let passed = 0;
 let failed = 0;
@@ -185,7 +177,7 @@ if (good.status === 201) {
 console.log('\n5. Direct database insert is blocked');
 
 {
-  const anon = createClient(env.NEXT_PUBLIC_SUPABASE_URL, env.NEXT_PUBLIC_SUPABASE_ANON_KEY, {
+  const anon = createClient(loaded.url, loaded.anonKey, {
     auth: { persistSession: false },
   });
   const { error } = await anon.from('orders').insert({

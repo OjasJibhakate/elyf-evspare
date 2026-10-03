@@ -1,25 +1,21 @@
 # Going live — Supabase + Vercel
 
-Everything below takes about 20 minutes. Nothing here needs code changes; it is all
-account setup and commands.
+Takes about 20 minutes. No code changes — this is all account setup and commands.
 
-You will need: a Supabase account (free) and the Vercel project you already created.
+You need: a Supabase account (free) and your Vercel project.
 
 ---
 
 ## 1. Create the Supabase project
 
-1. Go to **supabase.com** → **New project**
+1. **supabase.com** → **New project**
 2. Name: `elyf-evspare`
-3. **Database password** — generate a strong one and save it in your password manager.
-   You will not need it day to day, but losing it means losing database access.
-4. **Region: Mumbai (ap-south-1)** — pick this, not the default. It is the difference
-   between a fast site and a slow one for Indian customers.
-5. Wait ~2 minutes for it to provision.
+3. **Database password** — generate a strong one, save it in your password manager
+4. **Region: Mumbai (ap-south-1)** — do not leave the default. This is the difference
+   between a fast and a slow site for Indian customers.
+5. Wait ~2 minutes
 
 ## 2. Create the tables
-
-From the project folder:
 
 ```powershell
 cd C:\Users\VICTUS\web_scrapper\elyf-store
@@ -28,59 +24,47 @@ npx supabase link --project-ref <your-project-ref>
 npx supabase db push
 ```
 
-The project ref is in the Supabase URL: `supabase.com/dashboard/project/<THIS-PART>`.
-
-`db push` applies both migrations — tables, roles, row level security, the audit log
-and the storage bucket. It prints what it applied.
+Project ref is in the dashboard URL: `supabase.com/dashboard/project/<THIS>`.
+This applies both migrations — tables, roles, row level security, audit log, storage bucket.
 
 ## 3. Copy the keys
 
-Supabase → **Project Settings → API**. You need three values:
+Supabase → **Project Settings → API**:
 
-| What | Where | Goes into |
+| What | Where | Variable name |
 | --- | --- | --- |
-| Project URL | top of the page | `NEXT_PUBLIC_SUPABASE_URL` |
-| `anon` / publishable key | under Project API keys | `NEXT_PUBLIC_SUPABASE_ANON_KEY` |
-| `service_role` / secret key | under Project API keys — **Reveal** first | `SUPABASE_SERVICE_ROLE_KEY` |
+| Project URL | top of page | `NEXT_PUBLIC_SUPABASE_URL` |
+| `anon` / publishable key | Project API keys | `NEXT_PUBLIC_SUPABASE_ANON_KEY` |
+| `service_role` / secret key | Project API keys — **Reveal** | `SUPABASE_SERVICE_ROLE_KEY` |
 
-> The service role key bypasses every security rule. It goes in Vercel only — never in
-> the code, never in a chat message, never in a screenshot.
+> The service role key bypasses every security rule. Vercel only — never in the code,
+> never in a chat message, never in a screenshot.
 
-## 4. Add them to Vercel
+## 4. Put the keys in two places
 
-Vercel → your project → **Settings → Environment Variables**. Add all three, for
-**Production, Preview and Development**:
+**Vercel** → your project → **Settings → Environment Variables** — add all three,
+ticked for Production, Preview and Development. Then **Deployments → ⋯ → Redeploy**.
+
+**Locally** — create `.env.production.local` in the project folder with the same three
+lines. The scripts print which database they are about to touch, and ask before doing
+anything to a remote one.
 
 ```
-NEXT_PUBLIC_SUPABASE_URL      = https://xxxxxxxx.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY = eyJhbGciOi...
-SUPABASE_SERVICE_ROLE_KEY     = eyJhbGciOi...
+NEXT_PUBLIC_SUPABASE_URL=https://xxxxxxxx.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=...
+SUPABASE_SERVICE_ROLE_KEY=...
 ```
 
-Then **Deployments → ⋯ → Redeploy** so the running site picks them up.
-
-## 5. Fill the database
-
-Still in the project folder, create a file `.env.production.local` containing the
-same three values (so the scripts talk to the live database), then:
+## 5. One command sets everything up
 
 ```powershell
-node scripts/seed-db.mjs
+node scripts/setup-production.mjs ojasjibhakate2006@gmail.com "a-strong-password" "Ojas"
 ```
 
-This loads the 787 products, 20 categories, store settings, home page content and the
-two policy pages.
+It checks the connection, seeds the 787 products and 20 categories, loads the store
+settings and home page content, and creates your admin account. Re-running it is safe.
 
-## 6. Create your admin account
-
-```powershell
-node scripts/create-admin.mjs ojasjibhakate2006@gmail.com "a-strong-password-you-keep" "Ojas"
-```
-
-Use a password of at least 12 characters that you do not use anywhere else. There is
-no way to become an admin through the website — only this command.
-
-## 7. Check it
+## 6. Check it before sending the link
 
 ```powershell
 $env:TEST_BASE_URL="https://your-site.vercel.app"
@@ -88,23 +72,49 @@ node scripts/security-test.mjs
 node scripts/order-test.mjs
 ```
 
-Both suites should be green against the live site. If anything fails, stop and fix it
-before sending the link to anyone.
+Both suites must be green. Then open `https://your-site.vercel.app/admin/login` and:
 
-Then sign in at `https://your-site.vercel.app/admin/login` and check:
-
-- [ ] Products load and you can edit a price
-- [ ] The change shows on the storefront within a few seconds
+- [ ] Edit a product price → the storefront shows it within seconds
 - [ ] Place a test order → it appears in **Orders**
-- [ ] Update its status → the customer page reflects it
-- [ ] Add a staff member in **Team**, then sign in as them and confirm they cannot
-      open Team or Settings
+- [ ] Update the status → the customer's order page shows it
+- [ ] Add a staff member → sign in as them → they cannot open Team or Settings
 
-## 8. Delete the test data
+Finally, clear the test data:
 
 ```powershell
-node scripts/cleanup-demo.mjs   # clears test orders
+node scripts/cleanup-demo.mjs
 ```
+
+---
+
+## ⚠️ Turn off Deployment Protection
+
+**Vercel → Settings → Deployment Protection → Vercel Authentication → Disabled.**
+
+While it is on, anyone opening your link gets a Vercel login wall instead of the store.
+Your client will not be able to see anything.
+
+---
+
+## Hosting options (decide with the client)
+
+| | Vercel Hobby (free) | Vercel Pro | Hostinger Web Apps |
+| --- | --- | --- | --- |
+| Cost | ₹0 | ~$20/month | ~₹3,000/year |
+| Commercial use allowed | **No** | Yes | Yes |
+| Setup | done | one click | a few hours |
+| Who fixes outages | Vercel | Vercel | you |
+
+Measured traffic for this store: **~822 KB per first visit**, so 100 GB (the Hobby
+bandwidth allowance) is about 127,000 visits a month. A shop doing 1,000–2,000 visits
+a month uses under 2% of it.
+
+So the free tier is not limited by capacity — it is limited by *terms*. Vercel's fair
+use page states Hobby is for "non-commercial personal use only", and defines commercial
+as including "advertising the sale of a product or service" and "receiving payment to
+create, update, or host the site".
+
+Fine for showing the client. Not fine to run their business on.
 
 ---
 
@@ -112,24 +122,27 @@ node scripts/cleanup-demo.mjs   # clears test orders
 
 | Name | Required | Purpose |
 | --- | --- | --- |
-| `NEXT_PUBLIC_SUPABASE_URL` | yes | Database, auth and storage |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | yes | Public key — safe in the browser, limited by RLS |
-| `SUPABASE_SERVICE_ROLE_KEY` | yes | Server-only key for order creation and team management |
-| `CATALOG_SHEET_URL` | no | Only if you want to import products from a Google Sheet |
+| `NEXT_PUBLIC_SUPABASE_URL` | yes | Database, auth, storage |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | yes | Public key — browser-safe, limited by RLS |
+| `SUPABASE_SERVICE_ROLE_KEY` | yes | Server-only: order creation, team management |
+| `CATALOG_SHEET_URL` | no | Only to import products from a Google Sheet |
 | `CATALOG_REVALIDATE_SECONDS` | no | Sheet refresh interval, default 300 |
 
-## Things to know
+## Handy commands
 
-**Backups.** Supabase takes daily backups on paid plans. On the free plan, run
-`npx supabase db dump -f backup.sql` occasionally and keep the file somewhere safe.
-The product catalogue also lives in `src/data/products.json`, so it can always be
-re-imported.
+| Command | What it does |
+| --- | --- |
+| `node scripts/setup-production.mjs <email> <password> [name]` | Full production setup |
+| `node scripts/seed-db.mjs` | Re-import the catalogue |
+| `node scripts/create-admin.mjs <email> <password> [name]` | Add or reset an admin |
+| `node scripts/security-test.mjs` | 15 access-control checks |
+| `node scripts/order-test.mjs` | 14 order and pricing checks |
+| `node scripts/cleanup-demo.mjs` | Clear test orders |
+| `node scripts/cleanup-users.mjs` | Remove throwaway accounts |
 
-**Custom domain.** Vercel → Settings → Domains → add `store.elyfevspare.com` and
-follow the DNS instructions. Do this after everything else works.
+## Backups and key rotation
 
-**Rotating keys.** If a key ever leaks: Supabase → Settings → API → reset the key,
-then update it in Vercel and redeploy. No code change needed.
-
-**Costs.** Supabase free tier covers 500 MB database, 1 GB file storage and 50,000
-monthly users — comfortably more than this shop needs for a long time.
+- Free plan: run `npx supabase db dump -f backup.sql` occasionally and keep the file safe.
+  The catalogue also lives in `src/data/products.json`, so it can always be re-imported.
+- Leaked key: Supabase → Settings → API → reset, update Vercel, redeploy. No code change.
+- Custom domain: Vercel → Settings → Domains, once everything else works.

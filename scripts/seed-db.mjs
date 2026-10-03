@@ -1,46 +1,25 @@
 /**
- * Seeds the catalogue into Supabase from the bundled JSON files.
+ * Seeds the catalogue into Supabase.
  *
- *   node scripts/seed-db.mjs            # uses .env.local
- *   node scripts/seed-db.mjs --reset    # deletes existing products/categories first
+ *   node scripts/seed-db.mjs              # local database, no prompt
+ *   node scripts/seed-db.mjs --yes        # remote without the confirmation
+ *   node scripts/seed-db.mjs --reset      # delete existing products/categories first
  *
- * Safe to re-run: products are upserted by slug.
+ * Safe to re-run: products and categories are upserted by slug.
  */
 import { readFileSync } from 'node:fs';
-import { fileURLToPath } from 'node:url';
-import { dirname, join } from 'node:path';
+import { join } from 'node:path';
 import { createClient } from '@supabase/supabase-js';
+import { loadEnv, confirmTarget, assertConfigured, root } from './_env.mjs';
 
-const here = dirname(fileURLToPath(import.meta.url));
-const root = join(here, '..');
-
-function loadEnv() {
-  const file = join(root, '.env.local');
-  const env = {};
-  try {
-    for (const line of readFileSync(file, 'utf8').split('\n')) {
-      const trimmed = line.trim();
-      if (!trimmed || trimmed.startsWith('#')) continue;
-      const eq = trimmed.indexOf('=');
-      if (eq === -1) continue;
-      env[trimmed.slice(0, eq).trim()] = trimmed.slice(eq + 1).trim();
-    }
-  } catch (e) {
-    /* fall back to process.env */
-  }
-  return { ...env, ...process.env };
+const loaded = loadEnv();
+assertConfigured(loaded);
+if (!(await confirmTarget(loaded))) {
+  console.log('Cancelled.');
+  process.exit(0);
 }
 
-const env = loadEnv();
-const url = env.NEXT_PUBLIC_SUPABASE_URL;
-const key = env.SUPABASE_SERVICE_ROLE_KEY;
-
-if (!url || !key) {
-  console.error('Missing NEXT_PUBLIC_SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY');
-  process.exit(1);
-}
-
-const db = createClient(url, key, { auth: { persistSession: false } });
+const db = createClient(loaded.url, loaded.key, { auth: { persistSession: false } });
 const reset = process.argv.includes('--reset');
 
 function slugify(value) {
@@ -58,6 +37,10 @@ const categories = JSON.parse(readFileSync(join(root, 'src/data/categories.json'
 console.log(`Seeding ${categories.length} categories and ${products.length} products…`);
 
 if (reset) {
+  if (!loaded.isLocal && !process.argv.includes('--yes')) {
+    console.error('Refusing to --reset a remote database without --yes');
+    process.exit(1);
+  }
   const { error } = await db.from('products').delete().neq('id', '00000000-0000-0000-0000-000000000000');
   if (error) throw error;
   const { error: catError } = await db.from('categories').delete().neq('id', '00000000-0000-0000-0000-000000000000');
@@ -180,6 +163,23 @@ const { error: blockError } = await db.from('content_blocks').upsert(
         ],
       },
     },
+    {
+      key: 'sections',
+      type: 'sections',
+      position: 3,
+      is_active: true,
+      data: {
+        items: [
+          { key: 'hero', label: 'Hero banner', enabled: true },
+          { key: 'categories', label: 'Shop by category', enabled: true },
+          { key: 'bestsellers', label: 'Best sellers', enabled: true },
+          { key: 'bulk_banner', label: 'Bulk quote banner', enabled: true },
+          { key: 'new_arrivals', label: 'Newly listed', enabled: true },
+        ],
+      },
+    },
+    { key: 'hero_products', type: 'products', position: 4, is_active: true, data: { items: [] } },
+    { key: 'featured_products', type: 'products', position: 5, is_active: true, data: { items: [] } },
   ],
   { onConflict: 'key' },
 );

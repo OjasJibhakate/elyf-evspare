@@ -1,10 +1,11 @@
 node_modules
 .next
 out
+
+# Environment files — never commit real keys
 .env*
 !.env.example
+
 .DS_Store
 *.log
-.vercel
-
 .vercel

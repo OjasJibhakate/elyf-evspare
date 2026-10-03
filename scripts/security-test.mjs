@@ -7,34 +7,22 @@
  * then cleans up after itself. Every check prints PASS or FAIL; the process
  * exits non-zero if anything regressed.
  */
-import { readFileSync } from 'node:fs';
-import { fileURLToPath } from 'node:url';
-import { dirname, join } from 'node:path';
 import { createClient } from '@supabase/supabase-js';
+import { loadEnv, assertConfigured } from './_env.mjs';
 
-const here = dirname(fileURLToPath(import.meta.url));
-const root = join(here, '..');
+const BASE = process.env.TEST_BASE_URL || 'http://localhost:3200';
 
-function loadEnv() {
-  const env = {};
-  try {
-    for (const line of readFileSync(join(root, '.env.local'), 'utf8').split('\n')) {
-      const trimmed = line.trim();
-      if (!trimmed || trimmed.startsWith('#')) continue;
-      const eq = trimmed.indexOf('=');
-      if (eq === -1) continue;
-      env[trimmed.slice(0, eq).trim()] = trimmed.slice(eq + 1).trim();
-    }
-  } catch (e) {
-    /* ignore */
-  }
-  return { ...env, ...process.env };
+const loaded = loadEnv();
+assertConfigured(loaded);
+
+const URL = loaded.url;
+const ANON = loaded.anonKey;
+const SERVICE = loaded.key;
+
+if (!ANON) {
+  console.error('Missing NEXT_PUBLIC_SUPABASE_ANON_KEY');
+  process.exit(1);
 }
-
-const env = loadEnv();
-const URL = env.NEXT_PUBLIC_SUPABASE_URL;
-const ANON = env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-const SERVICE = env.SUPABASE_SERVICE_ROLE_KEY;
 
 const admin = createClient(URL, SERVICE, { auth: { persistSession: false } });
 
