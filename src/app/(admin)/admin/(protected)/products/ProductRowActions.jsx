@@ -1,8 +1,9 @@
 'use client';
 
+import Link from 'next/link';
 import { useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
-import { Eye, EyeOff, Loader2, Trash2 } from 'lucide-react';
+import { Eye, EyeOff, Loader2, Pencil, Trash2 } from 'lucide-react';
 import { setProductActive, deleteProduct } from './actions';
 
 export default function ProductRowActions({ product }) {
@@ -24,7 +25,7 @@ export default function ProductRowActions({ product }) {
 
   function remove() {
     const confirmed = window.confirm(
-      `Delete “${product.name}”?\n\nThis removes it from the catalogue permanently. If you only want to hide it, use the hide button instead.`,
+      `Delete “${product.name}”?\n\nThis removes it from the catalogue permanently. If you only want to hide it, use the eye button instead.`,
     );
     if (!confirmed) return;
 
@@ -38,17 +39,29 @@ export default function ProductRowActions({ product }) {
     });
   }
 
+  const working = busy || pending;
+
   return (
     <div className="flex items-center justify-end gap-1">
       {error && <span className="me-2 text-xs text-rose-600">{error}</span>}
+
+      <Link
+        href={`/admin/products/${product.id}`}
+        className="btn-outline px-2.5 py-1.5 text-xs"
+        title="Edit this product"
+      >
+        <Pencil className="h-3.5 w-3.5" />
+        <span className="hidden sm:inline">Edit</span>
+      </Link>
+
       <button
         type="button"
         onClick={toggleActive}
-        disabled={busy || pending}
-        title={product.is_active ? 'Hide from store' : 'Show in store'}
+        disabled={working}
+        title={product.is_active ? 'Hide from the store' : 'Show in the store'}
         className="btn-ghost px-2 py-1.5"
       >
-        {busy || pending ? (
+        {working ? (
           <Loader2 className="h-4 w-4 animate-spin" />
         ) : product.is_active ? (
           <Eye className="h-4 w-4 text-emerald-600" />
@@ -56,10 +69,11 @@ export default function ProductRowActions({ product }) {
           <EyeOff className="h-4 w-4 text-slate-400" />
         )}
       </button>
+
       <button
         type="button"
         onClick={remove}
-        disabled={busy || pending}
+        disabled={working}
         title="Delete product"
         className="btn-ghost px-2 py-1.5 text-slate-400 hover:text-rose-600"
       >

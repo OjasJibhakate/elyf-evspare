@@ -25,5 +25,10 @@ export function createAdminClient() {
 
   return createSupabaseClient(url, serviceKey, {
     auth: { autoRefreshToken: false, persistSession: false },
+    global: {
+      // Next caches fetch() by default, which would serve a stale order after a
+      // status change. Order data must always be live.
+      fetch: (input, init) => fetch(input, { ...init, cache: 'no-store' }),
+    },
   });
 }

@@ -1,29 +1,52 @@
 import Link from 'next/link';
-import { Package, FolderTree, AlertTriangle, TrendingUp, Plus, ArrowRight, Database } from 'lucide-react';
+import {
+  Package,
+  FolderTree,
+  AlertTriangle,
+  TrendingUp,
+  Plus,
+  ArrowRight,
+  Database,
+  ShoppingBag,
+} from 'lucide-react';
 import { createClient } from '@/lib/supabase/server';
+import { inr } from '@/lib/format';
+import { STATUS_LABEL, STATUS_STYLE, formatDate } from './orders/status';
 
 export const dynamic = 'force-dynamic';
 
 export default async function AdminDashboard() {
   const supabase = createClient();
 
-  const [{ count: productCount }, { count: activeCount }, { count: categoryCount }, { data: lowStock }] =
-    await Promise.all([
-      supabase.from('products').select('id', { count: 'exact', head: true }),
-      supabase.from('products').select('id', { count: 'exact', head: true }).eq('is_active', true),
-      supabase.from('categories').select('id', { count: 'exact', head: true }),
-      supabase
-        .from('products')
-        .select('id, name, slug, stock, unit')
-        .eq('is_active', true)
-        .lte('stock', 0)
-        .order('name')
-        .limit(30),
-    ]);
+  const [
+    { count: productCount },
+    { count: activeCount },
+    { count: categoryCount },
+    { data: lowStock },
+    { count: newOrders },
+    { data: recentOrders },
+  ] = await Promise.all([
+    supabase.from('products').select('id', { count: 'exact', head: true }),
+    supabase.from('products').select('id', { count: 'exact', head: true }).eq('is_active', true),
+    supabase.from('categories').select('id', { count: 'exact', head: true }),
+    supabase
+      .from('products')
+      .select('id, name, slug, stock, unit')
+      .eq('is_active', true)
+      .lte('stock', 0)
+      .order('name')
+      .limit(30),
+    supabase.from('orders').select('id', { count: 'exact', head: true }).eq('status', 'new'),
+    supabase
+      .from('orders')
+      .select('id, order_no, customer_name, total, status, created_at')
+      .order('created_at', { ascending: false })
+      .limit(5),
+  ]);
 
   const cards = [
     { label: 'Products', value: productCount ?? 0, sub: `${activeCount ?? 0} live`, icon: Package, href: '/admin/products' },
-    { label: 'Categories', value: categoryCount ?? 0, sub: 'arrange on home page', icon: FolderTree, href: '/admin/categories' },
+    { label: 'New orders', value: newOrders ?? 0, sub: 'waiting for you', icon: ShoppingBag, href: '/admin/orders?status=new' },
     { label: 'Out of stock', value: lowStock?.length ?? 0, sub: 'hidden from ordering', icon: AlertTriangle, href: '/admin/products?stock=out' },
   ];
 
@@ -90,6 +113,45 @@ export default async function AdminDashboard() {
           )}
           <Link href="/admin/products?stock=out" className="btn-outline mt-4 w-full">
             Review all
+          </Link>
+        </section>
+
+        <section className="card p-5">
+          <h2 className="flex items-center gap-2 text-base font-bold">
+            <ShoppingBag className="h-4 w-4 text-brand-800" /> Latest orders
+          </h2>
+          {recentOrders?.length ? (
+            <ul className="mt-3 divide-y divide-slate-100">
+              {recentOrders.map((o) => (
+                <li key={o.id} className="flex items-center justify-between gap-3 py-2.5">
+                  <Link href={`/admin/orders/${o.id}`} className="min-w-0">
+                    <span className="block text-sm font-medium text-slate-800 hover:text-brand-800">
+                      {o.order_no}
+                    </span>
+                    <span className="block text-xs text-slate-500">
+                      {o.customer_name} · {formatDate(o.created_at)}
+                    </span>
+                  </Link>
+                  <span className="flex shrink-0 items-center gap-2">
+                    <span className="text-sm font-semibold">{inr(o.total)}</span>
+                    <span
+                      className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${
+                        STATUS_STYLE[o.status] || 'bg-slate-100 text-slate-600'
+                      }`}
+                    >
+                      {STATUS_LABEL[o.status] || o.status}
+                    </span>
+                  </span>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="mt-3 text-sm text-slate-500">
+              No orders yet. Every order placed on the website lands here the moment it is submitted.
+            </p>
+          )}
+          <Link href="/admin/orders" className="btn-outline mt-4 w-full">
+            View all orders
           </Link>
         </section>
 

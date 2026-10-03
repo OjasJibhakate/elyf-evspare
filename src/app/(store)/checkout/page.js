@@ -18,7 +18,6 @@ import {
 import { useCart } from '@/context/CartContext';
 import ProductImage from '@/components/ProductImage';
 import { inr } from '@/lib/format';
-import { newOrderId, saveOrder } from '@/lib/orders';
 
 const initialForm = {
   name: '',
@@ -39,6 +38,7 @@ export default function CheckoutPage() {
   const [form, setForm] = useState(initialForm);
   const [payment, setPayment] = useState('cod');
   const [errors, setErrors] = useState({});
+  const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
   const method = shippingMethods.find((m) => m.id === shippingId) || shippingMethods[0];
@@ -65,25 +65,39 @@ export default function CheckoutPage() {
     return Object.keys(next).length === 0;
   }
 
-  function placeOrder(e) {
+  async function placeOrder(e) {
     e.preventDefault();
     if (items.length === 0 || !validate()) return;
     setSubmitting(true);
+    setError('');
 
-    const pay = paymentMethods.find((p) => p.id === payment) || paymentMethods[0];
-    const order = {
-      id: newOrderId(),
-      createdAt: new Date().toISOString(),
-      items: items.map((i) => ({ ...i })),
-      customer: { ...form },
-      shipping: { id: method.id, label: method.label, note: method.note },
-      payment: { id: pay.id, label: pay.label },
-      totals: { subtotal, gst, shipping, total },
-    };
+    try {
+      // Only slugs and quantities are sent — the server recomputes every price.
+      const response = await fetch('/api/orders', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          items: items.map((i) => ({ slug: i.slug, qty: i.qty })),
+          customer: { ...form },
+          shipping: { id: shippingId },
+          payment: { id: payment },
+        }),
+      });
 
-    saveOrder(order);
-    clear();
-    router.push(`/order/${order.id}`);
+      const data = await response.json();
+
+      if (!response.ok) {
+        setError(data.error || 'Could not place the order. Please try again.');
+        setSubmitting(false);
+        return;
+      }
+
+      clear();
+      router.push(`/order/${data.token}`);
+    } catch (err) {
+      setError('Network problem — please check your connection and try again.');
+      setSubmitting(false);
+    }
   }
 
   if (!storeOpen) {
@@ -414,12 +428,17 @@ export default function CheckoutPage() {
             </dl>
 
             <div className="px-5 pb-5">
+              {error && (
+                <p className="mb-3 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">
+                  {error}
+                </p>
+              )}
               <button type="submit" disabled={submitting} className="btn-primary w-full py-3.5 text-base">
                 {submitting ? 'Placing order…' : 'Place order'}
               </button>
               <p className="mt-3 flex items-center justify-center gap-1.5 text-center text-[11px] text-slate-500">
-                <Lock className="h-3 w-3" /> Your details stay on this device — we confirm every order
-                on WhatsApp.
+                <Lock className="h-3 w-3" /> We confirm stock and the final invoice on WhatsApp before
+                dispatch.
               </p>
             </div>
           </div>

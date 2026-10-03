@@ -1,13 +1,26 @@
 import Link from 'next/link';
-import { Plus, Search, CheckCircle2 } from 'lucide-react';
+import { Suspense } from 'react';
+import { Plus, CheckCircle2 } from 'lucide-react';
 import { createClient } from '@/lib/supabase/server';
 import { inr } from '@/lib/format';
 import ProductRowActions from './ProductRowActions';
 import BulkPriceTool from './BulkPriceTool';
+import ProductsToolbar from './ProductsToolbar';
 
 export const dynamic = 'force-dynamic';
 
 const PAGE_SIZE = 25;
+
+const SORT_MAP = {
+  'name-asc': { column: 'name', ascending: true },
+  'name-desc': { column: 'name', ascending: false },
+  newest: { column: 'created_at', ascending: false },
+  oldest: { column: 'created_at', ascending: true },
+  'price-asc': { column: 'price', ascending: true },
+  'price-desc': { column: 'price', ascending: false },
+  'stock-asc': { column: 'stock', ascending: true },
+  'stock-desc': { column: 'stock', ascending: false },
+};
 
 export default async function AdminProductsPage({ searchParams }) {
   const supabase = createClient();
@@ -17,6 +30,7 @@ export default async function AdminProductsPage({ searchParams }) {
   const categoryId = sp.category || '';
   const stockFilter = sp.stock || '';
   const activeFilter = sp.active || '';
+  const sort = SORT_MAP[sp.sort] ? sp.sort : 'name-asc';
 
   const { data: categories } = await supabase.from('categories').select('id, name').order('name');
   const categoryById = new Map((categories || []).map((c) => [c.id, c.name]));
@@ -26,18 +40,19 @@ export default async function AdminProductsPage({ searchParams }) {
     .select('id, name, slug, price, unit, moq, stock, part_no, images, is_active, category_id', {
       count: 'exact',
     })
-    .order('name')
+    .order(SORT_MAP[sort].column, { ascending: SORT_MAP[sort].ascending })
     .range((page - 1) * PAGE_SIZE, page * PAGE_SIZE - 1);
 
   if (q) {
-    // Search by name or part number — the % is escaped so a stray wildcard
-    // cannot turn into an expensive scan.
+    // Search by name or part number — wildcards are stripped so a stray % cannot
+    // turn into an expensive scan.
     const safe = q.replace(/[%_]/g, '');
     query = query.or(`name.ilike.%${safe}%,part_no.ilike.%${safe}%`);
   }
   if (categoryId) query = query.eq('category_id', categoryId);
   if (stockFilter === 'out') query = query.lte('stock', 0);
   if (stockFilter === 'low') query = query.gt('stock', 0).lte('stock', 50);
+  if (stockFilter === 'in') query = query.gt('stock', 50);
   if (activeFilter === 'hidden') query = query.eq('is_active', false);
   if (activeFilter === 'live') query = query.eq('is_active', true);
 
@@ -45,13 +60,9 @@ export default async function AdminProductsPage({ searchParams }) {
 
   const totalPages = Math.max(1, Math.ceil((count || 0) / PAGE_SIZE));
 
-  const buildHref = (patch) => {
+  const buildPageHref = (nextPage) => {
     const next = new URLSearchParams(sp);
-    Object.entries(patch).forEach(([k, v]) => {
-      if (!v) next.delete(k);
-      else next.set(k, v);
-    });
-    if (!('page' in patch)) next.delete('page');
+    next.set('page', String(nextPage));
     return `/admin/products?${next.toString()}`;
   };
 
@@ -60,10 +71,7 @@ export default async function AdminProductsPage({ searchParams }) {
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold">Products</h1>
-          <p className="mt-1 text-sm text-slate-500">
-            {count ?? 0} product{count === 1 ? '' : 's'}
-            {q ? ` matching “${q}”` : ''}
-          </p>
+          <p className="mt-1 text-sm text-slate-500">Everything in your catalogue.</p>
         </div>
         <Link href="/admin/products/new" className="btn-brand">
           <Plus className="h-4 w-4" /> Add product
@@ -81,48 +89,19 @@ export default async function AdminProductsPage({ searchParams }) {
         </p>
       )}
 
-      <form action="/admin/products" className="flex flex-wrap items-end gap-2">
-        <div className="relative min-w-[200px] flex-1">
-          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-          <input
-            name="q"
-            defaultValue={q}
-            placeholder="Search by name or part number…"
-            className="input py-2 pl-9"
-          />
-        </div>
-
-        <select name="category" defaultValue={categoryId} className="input w-auto py-2">
-          <option value="">All categories</option>
-          {(categories || []).map((c) => (
-            <option key={c.id} value={c.id}>
-              {c.name}
-            </option>
-          ))}
-        </select>
-
-        <select name="stock" defaultValue={stockFilter} className="input w-auto py-2">
-          <option value="">Any stock</option>
-          <option value="out">Out of stock</option>
-          <option value="low">Low stock (≤ 50)</option>
-        </select>
-
-        <select name="active" defaultValue={activeFilter} className="input w-auto py-2">
-          <option value="">Live + hidden</option>
-          <option value="live">Live only</option>
-          <option value="hidden">Hidden only</option>
-        </select>
-
-        <button type="submit" className="btn-outline py-2">
-          Filter
-        </button>
-      </form>
+      <Suspense fallback={<div className="card h-24 animate-pulse" />}>
+        <ProductsToolbar
+          categories={categories || []}
+          total={count ?? 0}
+          showing={(products || []).length}
+        />
+      </Suspense>
 
       <BulkPriceTool categories={categories || []} />
 
       <div className="card overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[720px] text-sm">
+          <table className="w-full min-w-[760px] text-sm">
             <thead className="border-b border-slate-200 bg-slate-50 text-left text-xs uppercase tracking-wide text-slate-500">
               <tr>
                 <th className="px-4 py-3 font-semibold">Product</th>
@@ -197,12 +176,12 @@ export default async function AdminProductsPage({ searchParams }) {
           </p>
           <div className="flex gap-2">
             {page > 1 && (
-              <Link href={buildHref({ page: String(page - 1) })} className="btn-outline py-2">
+              <Link href={buildPageHref(page - 1)} className="btn-outline py-2">
                 Previous
               </Link>
             )}
             {page < totalPages && (
-              <Link href={buildHref({ page: String(page + 1) })} className="btn-outline py-2">
+              <Link href={buildPageHref(page + 1)} className="btn-outline py-2">
                 Next
               </Link>
             )}
