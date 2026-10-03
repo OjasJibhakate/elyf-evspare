@@ -3,12 +3,15 @@
  *
  *   node scripts/cleanup-users.mjs                       # known test patterns
  *   node scripts/cleanup-users.mjs someone@example.com   # one specific account
+ *   node scripts/cleanup-users.mjs someone@example.com --force   # even an admin
  *
- * Never removes an admin account, so it cannot be used to lock you out.
+ * Admin accounts are skipped unless you pass --force, so a stray run cannot lock
+ * you out of the admin panel.
  */
 import { createClient } from '@supabase/supabase-js';
 import { loadEnv, confirmTarget, assertConfigured } from './_env.mjs';
 
+const force = process.argv.includes('--force');
 const requested = process.argv.slice(2).filter((a) => a && !a.startsWith('--'));
 
 const loaded = loadEnv();
@@ -44,8 +47,8 @@ if (!targets.length) {
 let removed = 0;
 for (const user of targets) {
   const role = roleById.get(user.id);
-  if (role === 'admin') {
-    console.log(`  SKIP  ${user.email} — admin account`);
+  if (role === 'admin' && !force) {
+    console.log(`  SKIP  ${user.email} — admin account (use --force to remove)`);
     continue;
   }
   const { error } = await db.auth.admin.deleteUser(user.id);

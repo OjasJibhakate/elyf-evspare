@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
+import { ShieldCheck } from 'lucide-react';
 import { getSessionProfile } from '@/lib/supabase/server';
 import { safeNext } from '@/lib/safe-next';
 import AccountNav from './AccountNav';
@@ -29,7 +30,14 @@ export default async function AccountLayout({ children }) {
             <span className="block text-xs text-slate-500">{profile.email}</span>
           </span>
         </div>
-        <LogoutButton />
+        <div className="flex flex-wrap items-center gap-2">
+          {['admin', 'staff'].includes(profile.role) && (
+            <Link href="/admin" className="btn-outline">
+              <ShieldCheck className="h-4 w-4" /> Admin panel
+            </Link>
+          )}
+          <LogoutButton />
+        </div>
       </div>
 
       <div className="mt-6">

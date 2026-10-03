@@ -15,7 +15,8 @@ const perks = [
 ];
 
 export default function LoginPage({ searchParams }) {
-  const next = safeNext(searchParams?.next, '/account');
+  const requested = typeof searchParams?.next === 'string' ? searchParams.next : '';
+  const next = safeNext(requested, '/account');
 
   return (
     <div className="container py-12">
@@ -27,7 +28,7 @@ export default function LoginPage({ searchParams }) {
           </p>
 
           <div className="mt-6">
-            <LoginForm next={next} />
+            <LoginForm next={next} explicitNext={requested.trim().length > 0} />
           </div>
         </div>
 

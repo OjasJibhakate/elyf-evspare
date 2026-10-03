@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { Loader2, Lock, Mail } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 
-export default function LoginForm({ next = '/account' }) {
+export default function LoginForm({ next = '/account', explicitNext = false }) {
   const router = useRouter();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -22,7 +22,7 @@ export default function LoginForm({ next = '/account' }) {
     setBusy(true);
 
     const supabase = createClient();
-    const { error: signInError } = await supabase.auth.signInWithPassword({
+    const { data, error: signInError } = await supabase.auth.signInWithPassword({
       email: email.trim(),
       password,
     });
@@ -35,7 +35,23 @@ export default function LoginForm({ next = '/account' }) {
       return;
     }
 
-    router.replace(next);
+    // Staff and admins belong in the admin panel, not the customer account area.
+    // An explicit ?next= still wins, so a staff member heading to checkout is not
+    // yanked into /admin mid-order.
+    let target = next;
+    if (!explicitNext && data?.user) {
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('role, is_blocked')
+        .eq('id', data.user.id)
+        .maybeSingle();
+
+      if (profile && !profile.is_blocked && ['admin', 'staff'].includes(profile.role)) {
+        target = '/admin';
+      }
+    }
+
+    router.replace(target);
     router.refresh();
   }
 
