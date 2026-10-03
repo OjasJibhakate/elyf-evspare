@@ -1,5 +1,7 @@
 import Link from 'next/link';
 import { getSettings } from '@/lib/settings';
+import { getPage } from '@/lib/content';
+import { markdownToHtml } from '@/lib/markdown';
 
 export const metadata = {
   title: 'Terms & conditions',
@@ -48,31 +50,38 @@ const sections = [
 ];
 
 export default async function TermsPage() {
-  const { store } = await getSettings();
+  const [{ store }, page] = await Promise.all([getSettings(), getPage('terms')]);
+  const bodyHtml = page?.body ? markdownToHtml(page.body) : '';
 
   return (
     <div className="container py-10">
       <div className="mx-auto max-w-3xl">
-        <h1 className="text-2xl font-bold sm:text-3xl">Terms &amp; conditions</h1>
+        <h1 className="text-2xl font-bold sm:text-3xl">{page?.title || 'Terms & conditions'}</h1>
         <p className="mt-2 text-sm text-slate-500">
           These terms apply to all orders placed with {store.name}.
         </p>
 
-        <div className="mt-8 space-y-6">
-          {sections.map((s) => (
-            <section key={s.title} className="card p-6">
-              <h2 className="text-base font-bold">{s.title}</h2>
-              <ul className="mt-3 space-y-2 text-sm leading-6 text-slate-600">
-                {s.body.map((p) => (
-                  <li key={p} className="flex gap-2">
-                    <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-brand-800" />
-                    <span>{p}</span>
-                  </li>
-                ))}
-              </ul>
-            </section>
-          ))}
-        </div>
+        {bodyHtml ? (
+          <section className="card mt-8 p-6">
+            <div className="prose-elyf" dangerouslySetInnerHTML={{ __html: bodyHtml }} />
+          </section>
+        ) : (
+          <div className="mt-8 space-y-6">
+            {sections.map((s) => (
+              <section key={s.title} className="card p-6">
+                <h2 className="text-base font-bold">{s.title}</h2>
+                <ul className="mt-3 space-y-2 text-sm leading-6 text-slate-600">
+                  {s.body.map((p) => (
+                    <li key={p} className="flex gap-2">
+                      <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-brand-800" />
+                      <span>{p}</span>
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            ))}
+          </div>
+        )}
 
         <p className="mt-8 text-center text-sm text-slate-500">
           Questions about these terms?{' '}

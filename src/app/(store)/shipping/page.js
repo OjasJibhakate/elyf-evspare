@@ -1,6 +1,8 @@
 import Link from 'next/link';
 import { Truck, PackageCheck, RotateCcw, BadgeIndianRupee } from 'lucide-react';
 import { getSettings } from '@/lib/settings';
+import { getPage } from '@/lib/content';
+import { markdownToHtml } from '@/lib/markdown';
 
 export const metadata = {
   title: 'Shipping & returns',
@@ -10,60 +12,67 @@ export const metadata = {
 export const revalidate = 300;
 
 export default async function ShippingPage() {
-  const { store, shipping } = await getSettings();
+  const [{ store, shipping }, page] = await Promise.all([getSettings(), getPage('shipping')]);
   const delivery = shipping.find((m) => m.id === 'delivery');
+  const bodyHtml = page?.body ? markdownToHtml(page.body) : '';
 
   return (
     <div className="container py-10">
       <div className="mx-auto max-w-3xl">
-        <h1 className="text-2xl font-bold sm:text-3xl">Shipping &amp; returns</h1>
+        <h1 className="text-2xl font-bold sm:text-3xl">{page?.title || 'Shipping & returns'}</h1>
         <p className="mt-2 text-sm text-slate-500">
           Everything you need to know about dispatch, delivery timelines and replacements.
         </p>
 
-        <div className="mt-8 grid gap-4 sm:grid-cols-2">
-          <div className="card p-5">
-            <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-brand-50 text-brand-800">
-              <Truck className="h-5 w-5" />
-            </span>
-            <h2 className="mt-3 text-sm font-bold">Dispatch</h2>
-            <p className="mt-1 text-sm text-slate-600">
-              Orders confirmed before 4pm are packed the same day. Remaining orders leave our
-              warehouse within 24–48 working hours.
-            </p>
+        {bodyHtml ? (
+          <section className="card mt-8 p-6">
+            <div className="prose-elyf" dangerouslySetInnerHTML={{ __html: bodyHtml }} />
+          </section>
+        ) : (
+          <div className="mt-8 grid gap-4 sm:grid-cols-2">
+            <div className="card p-5">
+              <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-brand-50 text-brand-800">
+                <Truck className="h-5 w-5" />
+              </span>
+              <h2 className="mt-3 text-sm font-bold">Dispatch</h2>
+              <p className="mt-1 text-sm text-slate-600">
+                Orders confirmed before 4pm are packed the same day. Remaining orders leave our
+                warehouse within 24–48 working hours.
+              </p>
+            </div>
+            <div className="card p-5">
+              <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-brand-50 text-brand-800">
+                <PackageCheck className="h-5 w-5" />
+              </span>
+              <h2 className="mt-3 text-sm font-bold">Shipping charges</h2>
+              <p className="mt-1 text-sm text-slate-600">
+                Courier delivery {delivery ? `₹${delivery.rate}` : 'as per weight'}
+                {delivery?.freeAbove ? `, free on orders above ₹${delivery.freeAbove}` : ''}. Store
+                pickup is free.
+              </p>
+            </div>
+            <div className="card p-5">
+              <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-brand-50 text-brand-800">
+                <RotateCcw className="h-5 w-5" />
+              </span>
+              <h2 className="mt-3 text-sm font-bold">Damaged or wrong parts</h2>
+              <p className="mt-1 text-sm text-slate-600">
+                Share an unboxing photo within 48 hours of delivery — we ship a replacement or issue
+                a credit note, no questions asked.
+              </p>
+            </div>
+            <div className="card p-5">
+              <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-brand-50 text-brand-800">
+                <BadgeIndianRupee className="h-5 w-5" />
+              </span>
+              <h2 className="mt-3 text-sm font-bold">GST invoice</h2>
+              <p className="mt-1 text-sm text-slate-600">
+                Every order ships with a proper GST invoice. Add your GSTIN at checkout to claim
+                input credit.
+              </p>
+            </div>
           </div>
-          <div className="card p-5">
-            <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-brand-50 text-brand-800">
-              <PackageCheck className="h-5 w-5" />
-            </span>
-            <h2 className="mt-3 text-sm font-bold">Shipping charges</h2>
-            <p className="mt-1 text-sm text-slate-600">
-              Courier delivery {delivery ? `₹${delivery.rate}` : 'as per weight'}
-              {delivery?.freeAbove ? `, free on orders above ₹${delivery.freeAbove}` : ''}. Store
-              pickup is free.
-            </p>
-          </div>
-          <div className="card p-5">
-            <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-brand-50 text-brand-800">
-              <RotateCcw className="h-5 w-5" />
-            </span>
-            <h2 className="mt-3 text-sm font-bold">Damaged or wrong parts</h2>
-            <p className="mt-1 text-sm text-slate-600">
-              Share an unboxing photo within 48 hours of delivery — we ship a replacement or issue a
-              credit note, no questions asked.
-            </p>
-          </div>
-          <div className="card p-5">
-            <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-brand-50 text-brand-800">
-              <BadgeIndianRupee className="h-5 w-5" />
-            </span>
-            <h2 className="mt-3 text-sm font-bold">GST invoice</h2>
-            <p className="mt-1 text-sm text-slate-600">
-              Every order ships with a proper GST invoice. Add your GSTIN at checkout to claim input
-              credit.
-            </p>
-          </div>
-        </div>
+        )}
 
         <div className="card mt-6 p-6">
           <h2 className="text-base font-bold">Need to check your order status?</h2>
@@ -81,7 +90,10 @@ export default async function ShippingPage() {
         </div>
 
         <p className="mt-8 text-center text-sm text-slate-500">
-          Questions? <Link href="/contact" className="font-semibold text-brand-800 hover:underline">Contact us</Link>
+          Questions?{' '}
+          <Link href="/contact" className="font-semibold text-brand-800 hover:underline">
+            Contact us
+          </Link>
         </p>
       </div>
     </div>
