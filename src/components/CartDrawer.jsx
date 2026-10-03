@@ -6,10 +6,11 @@ import { X, Trash2, ShoppingBag, ArrowRight, Truck, MessageCircle } from 'lucide
 import { useCart } from '@/context/CartContext';
 import QuantityStepper from '@/components/QuantityStepper';
 import ProductImage from '@/components/ProductImage';
+import FreeDeliveryNote from '@/components/FreeDeliveryNote';
 import { inr } from '@/lib/format';
 
 export default function CartDrawer() {
-  const { isOpen, closeCart, items, setQty, remove, subtotal, gst, shipping, total, lines, store } =
+  const { isOpen, closeCart, items, setQty, remove, subtotal, gst, shipping, total, lines, freeDeliverySaving, store } =
     useCart();
   const router = useRouter();
 
@@ -100,6 +101,8 @@ export default function CartDrawer() {
             </div>
 
             <div className="border-t border-slate-200 bg-slate-50 px-5 py-4">
+              <FreeDeliveryNote className="mb-3" />
+
               <dl className="space-y-1.5 text-sm">
                 <div className="flex justify-between text-slate-600">
                   <dt>Subtotal</dt>
@@ -113,7 +116,12 @@ export default function CartDrawer() {
                   <dt className="inline-flex items-center gap-1">
                     <Truck className="h-3.5 w-3.5" /> Shipping
                   </dt>
-                  <dd className="font-medium text-slate-800">
+                  <dd className={`font-medium ${shipping === 0 ? 'text-emerald-700' : 'text-slate-800'}`}>
+                    {freeDeliverySaving > 0 && shipping === 0 && (
+                      <span className="mr-1.5 text-xs font-normal text-slate-400 line-through">
+                        {inr(freeDeliverySaving)}
+                      </span>
+                    )}
                     {shipping === 0 ? 'Free' : inr(shipping)}
                   </dd>
                 </div>

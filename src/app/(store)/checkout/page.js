@@ -17,6 +17,8 @@ import {
 } from 'lucide-react';
 import { useCart } from '@/context/CartContext';
 import ProductImage from '@/components/ProductImage';
+import FreeDeliveryNote from '@/components/FreeDeliveryNote';
+import { shippingFor } from '@/lib/config';
 import { inr } from '@/lib/format';
 
 const initialForm = {
@@ -34,7 +36,7 @@ const initialForm = {
 
 export default function CheckoutPage() {
   const router = useRouter();
-  const { items, subtotal, gst, shipping, total, shippingId, setShippingId, clear, count, shippingMethods, paymentMethods, store, storeOpen } = useCart();
+  const { items, subtotal, gst, gross, shipping, total, shippingId, setShippingId, clear, count, shippingMethods, paymentMethods, store, storeOpen } = useCart();
   const [form, setForm] = useState(initialForm);
   const [payment, setPayment] = useState('cod');
   const [errors, setErrors] = useState({});
@@ -241,35 +243,52 @@ export default function CheckoutPage() {
             <div className="mt-4 space-y-3">
               {shippingMethods
                 .filter((m) => m.enabled)
-                .map((m) => (
-                  <label
-                    key={m.id}
-                    className={`flex cursor-pointer items-start gap-3 rounded-lg border p-3 transition ${
-                      shippingId === m.id ? 'border-brand-800 bg-brand-50/50' : 'border-slate-200 hover:border-slate-300'
-                    }`}
-                  >
-                    <input
-                      type="radio"
-                      name="shipping-method"
-                      checked={shippingId === m.id}
-                      onChange={() => setShippingId(m.id)}
-                      className="mt-0.5 h-4 w-4 text-brand-800 focus:ring-brand-800"
-                    />
-                    <span className="flex-1">
-                      <span className="flex items-center justify-between gap-2">
-                        <span className="inline-flex items-center gap-2 text-sm font-semibold text-slate-800">
-                          {m.id === 'pickup' ? <MapPin className="h-4 w-4" /> : <Truck className="h-4 w-4" />}
-                          {m.label}
+                .map((m) => {
+                  const cost = shippingFor(m, gross);
+                  const wasPaid = cost === 0 && Number(m.rate) > 0;
+                  return (
+                    <label
+                      key={m.id}
+                      className={`flex cursor-pointer items-start gap-3 rounded-lg border p-3 transition ${
+                        shippingId === m.id ? 'border-brand-800 bg-brand-50/50' : 'border-slate-200 hover:border-slate-300'
+                      }`}
+                    >
+                      <input
+                        type="radio"
+                        name="shipping-method"
+                        checked={shippingId === m.id}
+                        onChange={() => setShippingId(m.id)}
+                        className="mt-0.5 h-4 w-4 text-brand-800 focus:ring-brand-800"
+                      />
+                      <span className="flex-1">
+                        <span className="flex items-center justify-between gap-2">
+                          <span className="inline-flex items-center gap-2 text-sm font-semibold text-slate-800">
+                            {m.id === 'pickup' ? <MapPin className="h-4 w-4" /> : <Truck className="h-4 w-4" />}
+                            {m.label}
+                          </span>
+                          <span className="text-sm font-semibold">
+                            {wasPaid && (
+                              <span className="mr-1.5 text-xs font-normal text-slate-400 line-through">
+                                {inr(m.rate)}
+                              </span>
+                            )}
+                            <span className={cost === 0 ? 'text-emerald-700' : 'text-slate-800'}>
+                              {cost === 0 ? 'Free' : inr(cost)}
+                            </span>
+                          </span>
                         </span>
-                        <span className="text-sm font-semibold text-slate-800">
-                          {m.rate === 0 ? 'Free' : inr(m.rate)}
+                        <span className="mt-0.5 block text-xs text-slate-500">
+                          {wasPaid
+                            ? `Free above ${inr(m.freeAbove)} — this order qualifies`
+                            : m.note}
                         </span>
                       </span>
-                      <span className="mt-0.5 block text-xs text-slate-500">{m.note}</span>
-                    </span>
-                  </label>
-                ))}
+                    </label>
+                  );
+                })}
             </div>
+
+            <FreeDeliveryNote className="mt-3" />
 
             {needsAddress && (
               <div className="mt-5 grid gap-4 sm:grid-cols-2">
@@ -419,7 +438,14 @@ export default function CheckoutPage() {
                 <dt className="inline-flex items-center gap-1">
                   <Truck className="h-3.5 w-3.5" /> {method.label}
                 </dt>
-                <dd className="font-medium text-slate-800">{shipping === 0 ? 'Free' : inr(shipping)}</dd>
+                <dd className={`font-medium ${shipping === 0 ? 'text-emerald-700' : 'text-slate-800'}`}>
+                  {shippingFor(method, 0) > 0 && shipping === 0 && (
+                    <span className="mr-1.5 text-xs font-normal text-slate-400 line-through">
+                      {inr(method.rate)}
+                    </span>
+                  )}
+                  {shipping === 0 ? 'Free' : inr(shipping)}
+                </dd>
               </div>
               <div className="flex justify-between border-t border-slate-200 pt-3 text-base">
                 <dt className="font-bold">Total payable</dt>

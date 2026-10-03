@@ -193,5 +193,101 @@ console.log('\n5. Direct database insert is blocked');
   check('browser cannot insert an order directly', !!error, 'insert succeeded!');
 }
 
+console.log('\n6. Free delivery threshold');
+
+{
+  const { data: settings } = await db.from('site_settings').select('data').eq('id', 1).single();
+  const delivery = (settings?.data?.shipping || []).find((m) => m.id === 'delivery');
+
+  if (!delivery?.freeAbove) {
+    check('a free-delivery threshold is configured', false, 'no freeAbove on the delivery method');
+  } else {
+    const threshold = Number(delivery.freeAbove);
+    const rate = Number(delivery.rate);
+
+    // A basket comfortably under the threshold should still be charged delivery.
+    const smallQty = Math.max(product.moq, Math.floor(threshold / 4 / product.price) || product.moq);
+    const small = await postOrder({
+      items: [{ slug: product.slug, qty: smallQty }],
+      customer,
+      shipping: { id: 'delivery' },
+      payment: { id: 'cod' },
+    });
+
+    if (small.status !== 201) {
+      check('a below-threshold order is accepted', false, `status ${small.status}`);
+    } else {
+      const { data: stored } = await db
+        .from('orders')
+        .select('subtotal, gst, shipping, total')
+        .eq('id', small.data.id)
+        .single();
+      const gross = Number(stored.subtotal) + Number(stored.gst);
+      check(
+        'below the threshold delivery is charged',
+        gross >= threshold || Math.abs(Number(stored.shipping) - rate) < 0.01,
+        `gross ${gross}, charged ${stored.shipping}`,
+      );
+      check(
+        'total includes the delivery charge',
+        Math.abs(Number(stored.total) - (gross + Number(stored.shipping))) < 0.01,
+        `total ${stored.total}`,
+      );
+      await db.from('orders').delete().eq('id', small.data.id);
+    }
+
+    // Enough units to cross the threshold must not be charged.
+    const bigQty = Math.ceil((threshold * 1.2) / product.price) + product.moq;
+    const big = await postOrder({
+      items: [{ slug: product.slug, qty: bigQty }],
+      customer,
+      shipping: { id: 'delivery' },
+      payment: { id: 'cod' },
+    });
+
+    if (big.status !== 201) {
+      check('an above-threshold order is accepted', false, `status ${big.status}`);
+    } else {
+      const { data: stored } = await db
+        .from('orders')
+        .select('subtotal, gst, shipping, total')
+        .eq('id', big.data.id)
+        .single();
+      const gross = Number(stored.subtotal) + Number(stored.gst);
+      check('the above-threshold basket really is above it', gross >= threshold, `gross ${gross}`);
+      check(
+        'delivery is free above the threshold',
+        Number(stored.shipping) === 0,
+        `charged ${stored.shipping}`,
+      );
+      check(
+        'total excludes delivery above the threshold',
+        Math.abs(Number(stored.total) - gross) < 0.01,
+        `total ${stored.total}, gross ${gross}`,
+      );
+      await db.from('orders').delete().eq('id', big.data.id);
+    }
+
+    // Store pickup is free regardless of basket size.
+    const pickup = await postOrder({
+      items: [{ slug: product.slug, qty: product.moq }],
+      customer,
+      shipping: { id: 'pickup' },
+      payment: { id: 'cod' },
+    });
+    if (pickup.status === 201) {
+      const { data: stored } = await db
+        .from('orders')
+        .select('shipping')
+        .eq('id', pickup.data.id)
+        .single();
+      check('store pickup is always free', Number(stored.shipping) === 0, `charged ${stored.shipping}`);
+      await db.from('orders').delete().eq('id', pickup.data.id);
+    } else {
+      check('store pickup order is accepted', false, `status ${pickup.status}`);
+    }
+  }
+}
+
 console.log(`\n${passed} passed, ${failed} failed\n`);
 process.exit(failed ? 1 : 0);

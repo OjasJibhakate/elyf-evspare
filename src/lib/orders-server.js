@@ -2,6 +2,7 @@ import 'server-only';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { getSettings } from '@/lib/settings';
 import { gstRateFor } from '@/lib/settings-shared';
+import { shippingFor } from '@/lib/config';
 
 /**
  * Order creation, server side.
@@ -112,8 +113,7 @@ export async function createOrder(payload) {
   if (!method) throw new OrderError('No delivery method is available right now.', 409);
 
   const gross = subtotal + gst;
-  const shippingCost =
-    method.rate === 0 || (method.freeAbove && gross >= method.freeAbove) ? 0 : Number(method.rate) || 0;
+  const shippingCost = shippingFor(method, gross);
 
   const requestedPayment = clean(payload?.payment?.id, 20);
   const payment =

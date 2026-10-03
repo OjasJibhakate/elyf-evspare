@@ -37,6 +37,28 @@ export const shippingMethods = [
   },
 ];
 
+/**
+ * What this method costs for a basket of `gross` (subtotal + GST).
+ *
+ * Used by the storefront *and* by the order API, so the price a customer sees
+ * is always the price the server charges.
+ */
+export function shippingFor(method, gross) {
+  if (!method) return 0;
+  const rate = Number(method.rate) || 0;
+  if (rate === 0) return 0;
+  if (method.freeAbove && gross >= method.freeAbove) return 0;
+  return rate;
+}
+
+/** How much more the customer must spend to unlock free delivery, else 0. */
+export function freeDeliveryGap(method, gross) {
+  if (!method || !method.freeAbove) return 0;
+  if (Number(method.rate) === 0) return 0;
+  const gap = Number(method.freeAbove) - gross;
+  return gap > 0 ? gap : 0;
+}
+
 export const paymentMethods = [
   { id: 'cod', label: 'Cash on delivery', note: 'Pay when the parcel reaches you', enabled: true },
   { id: 'upi', label: 'UPI / bank transfer', note: 'Account details shared on WhatsApp', enabled: true },

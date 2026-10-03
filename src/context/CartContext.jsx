@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useEffect, useMemo, useReducer, useState, useCallback } from 'react';
 import { settingsDefaults, gstRateFor } from '@/lib/settings-shared';
+import { shippingFor, freeDeliveryGap } from '@/lib/config';
 
 const CartContext = createContext(null);
 const STORAGE_KEY = 'elyf.cart.v1';
@@ -111,10 +112,7 @@ export function CartProvider({ children, settings }) {
     const count = items.reduce((sum, i) => sum + i.qty, 0);
     const lines = items.length;
     const gross = subtotal + gstAmount;
-    const shipping =
-      method && (method.rate === 0 || (method.freeAbove && gross >= method.freeAbove))
-        ? 0
-        : method?.rate || 0;
+    const shipping = shippingFor(method, gross);
     const total = gross + shipping;
 
     return {
@@ -131,9 +129,13 @@ export function CartProvider({ children, settings }) {
       gst: gstAmount,
       shipping,
       total,
+      gross,
       shippingId,
       setShippingId,
       shippingMethod: method,
+      freeDeliveryGap: freeDeliveryGap(method, gross),
+      freeDeliveryThreshold: method?.freeAbove || null,
+      freeDeliverySaving: shippingFor(method, 0),
       isOpen,
       openCart: () => setOpen(true),
       closeCart: () => setOpen(false),
