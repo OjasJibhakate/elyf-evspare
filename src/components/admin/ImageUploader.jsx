@@ -2,37 +2,12 @@
 
 import { useRef, useState } from 'react';
 import { ImagePlus, Loader2, Trash2, GripVertical } from 'lucide-react';
-import { createClient } from '@/lib/supabase/client';
-
-const MAX_BYTES = 5 * 1024 * 1024;
+import { uploadImage } from '@/lib/upload-image';
 
 /**
- * Uploads to Supabase Storage from the browser.
- *
- * The bucket only accepts authenticated staff (enforced by a storage policy),
- * so even a tampered session cannot push files. Images are resized in the
- * browser first — a 6 MB phone photo becomes ~150 KB, which keeps the store
- * fast and the storage bill at zero.
+ * Multi-image field for the product editor: device upload, reorder, remove.
+ * Photos are compressed in the browser before upload — see lib/upload-image.js.
  */
-async function shrink(file) {
-  if (!file.type.startsWith('image/')) return file;
-  if (file.size < 250 * 1024) return file;
-
-  const bitmap = await createImageBitmap(file);
-  const maxSide = 1200;
-  const scale = Math.min(1, maxSide / Math.max(bitmap.width, bitmap.height));
-  const width = Math.round(bitmap.width * scale);
-  const height = Math.round(bitmap.height * scale);
-
-  const canvas = document.createElement('canvas');
-  canvas.width = width;
-  canvas.height = height;
-  canvas.getContext('2d').drawImage(bitmap, 0, 0, width, height);
-
-  const blob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/webp', 0.85));
-  return blob && blob.size < file.size ? blob : file;
-}
-
 export default function ImageUploader({ name, initial = [] }) {
   const [urls, setUrls] = useState(initial);
   const [busy, setBusy] = useState(false);
@@ -45,34 +20,15 @@ export default function ImageUploader({ name, initial = [] }) {
 
     setBusy(true);
     setError('');
-    const supabase = createClient();
     const uploaded = [];
 
     for (const file of files) {
-      if (!file.type.startsWith('image/')) {
-        setError(`${file.name} is not an image.`);
+      const result = await uploadImage(file, { folder: 'products' });
+      if (result.error) {
+        setError(result.error);
         continue;
       }
-      const blob = await shrink(file);
-      if (blob.size > MAX_BYTES) {
-        setError(`${file.name} is larger than 5 MB even after compressing.`);
-        continue;
-      }
-
-      const ext = blob.type === 'image/webp' ? 'webp' : (file.name.split('.').pop() || 'jpg').toLowerCase();
-      const path = `products/${crypto.randomUUID()}.${ext}`;
-
-      const { error: uploadError } = await supabase.storage
-        .from('media')
-        .upload(path, blob, { contentType: blob.type || file.type, upsert: false });
-
-      if (uploadError) {
-        setError('Upload failed. Please try again.');
-        continue;
-      }
-
-      const { data } = supabase.storage.from('media').getPublicUrl(path);
-      uploaded.push(data.publicUrl);
+      uploaded.push(result.url);
     }
 
     setUrls((current) => [...current, ...uploaded]);

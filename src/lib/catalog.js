@@ -31,7 +31,7 @@ async function loadFromSupabase() {
     await Promise.all([
       supabase
         .from('categories')
-        .select('id, name, slug, image_url, position')
+        .select('id, name, slug, image_url, image_focus, position')
         .eq('is_active', true)
         .order('position'),
       supabase
@@ -80,6 +80,7 @@ async function loadFromSupabase() {
       slug: c.slug,
       name: c.name,
       image: c.image_url || '',
+      focus: c.image_focus || null,
       position: c.position ?? 0,
       icon: 'box',
       count: counts[c.slug] || 0,

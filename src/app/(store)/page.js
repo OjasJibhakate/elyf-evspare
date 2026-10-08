@@ -160,6 +160,7 @@ export default async function HomePage() {
                   <ProductImage
                     src={c.image}
                     alt={c.name}
+                    focus={c.focus}
                     className="h-full w-full object-cover transition duration-300 group-hover:scale-105"
                   />
                 </div>

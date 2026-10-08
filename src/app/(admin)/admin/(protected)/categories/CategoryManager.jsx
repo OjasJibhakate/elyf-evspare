@@ -14,8 +14,19 @@ import {
   X,
 } from 'lucide-react';
 import { deleteCategory, reorderCategory, saveCategory, setCategoryActive } from './actions';
+import ProductImage from '@/components/ProductImage';
+import ImageField from '@/components/admin/ImageField';
 
-const EMPTY = { id: '', name: '', slug: '', description: '', image_url: '', position: 0, is_active: true };
+const EMPTY = {
+  id: '',
+  name: '',
+  slug: '',
+  description: '',
+  image_url: '',
+  image_focus: null,
+  position: 0,
+  is_active: true,
+};
 
 export default function CategoryManager({ categories }) {
   const router = useRouter();
@@ -79,7 +90,12 @@ export default function CategoryManager({ categories }) {
 
               <span className="h-12 w-12 shrink-0 overflow-hidden rounded-lg border border-slate-200 bg-slate-50">
                 {c.image_url ? (
-                  <img src={c.image_url} alt="" className="h-full w-full object-cover" loading="lazy" />
+                  <ProductImage
+                    src={c.image_url}
+                    alt=""
+                    focus={c.image_focus}
+                    className="h-full w-full object-cover"
+                  />
                 ) : null}
               </span>
 
@@ -237,26 +253,13 @@ function CategoryDrawer({ category, onClose, onSaved }) {
           </div>
 
           <div>
-            <label className="label" htmlFor="cat-image">
-              Tile photo URL
-            </label>
-            <input
-              id="cat-image"
-              name="image_url"
-              defaultValue={category.image_url || ''}
-              className="input"
-              placeholder="https://…"
+            <ImageField
+              label="Tile photo"
+              initialUrl={category.image_url || ''}
+              initialFocus={category.image_focus}
+              folder="categories"
+              help="Shown on the home page and category list. Leave empty to use the first product photo."
             />
-            <p className="mt-1 text-xs text-slate-500">
-              Shown on the home page and category list. Leave empty to use the first product photo.
-            </p>
-            {category.image_url && (
-              <img
-                src={category.image_url}
-                alt=""
-                className="mt-2 h-20 w-32 rounded-lg border border-slate-200 object-cover"
-              />
-            )}
           </div>
 
           <div>

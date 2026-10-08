@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { normaliseFocus } from '@/lib/image-focus';
 
 const slug = z
   .string()
@@ -6,6 +7,29 @@ const slug = z
   .min(1, 'Slug is required')
   .max(80)
   .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, 'Use lowercase letters, numbers and dashes only');
+
+/**
+ * Tile framing. Arrives as a JSON string from a hidden form field and is stored
+ * as jsonb. Anything unparseable becomes null — "no adjustment" — rather than
+ * failing the whole save, and the values are clamped so a crafted request cannot
+ * push the crop out of range.
+ */
+const focusSchema = z.any().transform((value) => {
+  if (value === undefined || value === null || value === '') return null;
+
+  let parsed = value;
+  if (typeof value === 'string') {
+    if (value.length > 300) return null;
+    try {
+      parsed = JSON.parse(value);
+    } catch {
+      return null;
+    }
+  }
+
+  if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return null;
+  return normaliseFocus(parsed);
+});
 
 export function slugify(value) {
   return String(value || '')
@@ -40,6 +64,8 @@ export const categorySchema = z.object({
   slug,
   description: z.string().max(2000).optional().default(''),
   image_url: z.string().trim().max(500).optional().default(''),
+  // Framing for the tile photo: { x, y, zoom }. Null means "no adjustment".
+  image_focus: focusSchema,
   position: z.coerce.number().int().min(0).max(9999).default(0),
   is_active: z.coerce.boolean().default(true),
 });

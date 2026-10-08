@@ -11,7 +11,7 @@ export default async function AdminCategoriesPage() {
   const [{ data: categories }, { data: products }] = await Promise.all([
     supabase
       .from('categories')
-      .select('id, name, slug, description, image_url, position, is_active')
+      .select('id, name, slug, description, image_url, image_focus, position, is_active')
       .order('position')
       .order('name'),
     supabase.from('products').select('category_id'),

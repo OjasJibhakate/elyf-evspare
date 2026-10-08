@@ -11,6 +11,7 @@ function readForm(formData) {
     slug: formData.get('slug'),
     description: formData.get('description') || '',
     image_url: formData.get('image_url') || '',
+    image_focus: formData.get('image_focus') || null,
     position: formData.get('position') || 0,
     is_active: formData.get('is_active') === 'on' || formData.get('is_active') === 'true',
   };
