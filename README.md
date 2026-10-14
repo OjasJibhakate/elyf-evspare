@@ -1,4 +1,4 @@
-# ELYF EVSPARE — store front
+# Shri Ashapura Auto Part EV — store front
 
 A fast, mobile-first storefront for EV spare parts built with Next.js (App Router) and Tailwind CSS.
 Includes catalogue browsing, search, cart, a full checkout flow and order confirmation with

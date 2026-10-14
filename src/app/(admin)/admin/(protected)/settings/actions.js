@@ -9,6 +9,7 @@ function readForm(formData) {
     store_name: formData.get('store_name'),
     tagline: formData.get('tagline') || '',
     phone: formData.get('phone'),
+    phone2: formData.get('phone2') || '',
     whatsapp: String(formData.get('whatsapp') || '').replace(/[^\d]/g, ''),
     email: formData.get('email'),
     address: formData.get('address') || '',

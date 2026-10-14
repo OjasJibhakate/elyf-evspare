@@ -1,15 +1,29 @@
 export const store = {
-  name: 'ELYF EVSPARE',
-  tagline: 'Electric Vehicle Spare Parts',
-  phone: '+91 93258 80128',
-  phoneRaw: '919325880128',
-  whatsapp: '919325880128',
-  email: 'ojasjibhakate2006@gmail.com',
-  address: 'India',
+  name: 'Shri Ashapura Auto Part EV',
+  tagline: 'EV Spare Parts · Mumbai',
+  phone: '+91 90822 48351',
+  phoneRaw: '919082248351',
+  phone2: '+91 78925 15432',
+  phone2Raw: '917892515432',
+  whatsapp: '919082248351',
+  email: 'shriashapura06@gmail.com',
+  address: 'Shop No. 06, Ukaji House, Agiary Lane, Fort, Mumbai',
   gstin: '',
   currency: 'INR',
   minOrderNote: 'Wholesale pricing — minimum order quantity applies per item.',
 };
+
+/** Two letters for the square logo badge, derived from the shop name. */
+export function storeInitials(name) {
+  const words = String(name || '')
+    .split(/\s+/)
+    .filter((w) => /^[A-Za-z]/.test(w));
+  if (!words.length) return 'EV';
+  return words
+    .slice(0, 2)
+    .map((w) => w[0].toUpperCase())
+    .join('');
+}
 
 // Chargers attract 5% GST, every other category is billed at 18%.
 const GST_5_PERCENT = ['lithium-battery-chargers', 'lead-acid-ev-chargers'];

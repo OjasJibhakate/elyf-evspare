@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useState } from 'react';
+import { storeInitials } from '@/lib/config';
 import {
   LayoutDashboard,
   Package,
@@ -30,7 +31,8 @@ const NAV = [
   { href: '/admin/team', label: 'Team', icon: Users, adminOnly: true },
 ];
 
-export default function AdminShell({ profile, children }) {
+export default function AdminShell({ profile, store, children }) {
+  const shop = store || { name: 'Shri Ashapura Auto Part EV' };
   const pathname = usePathname();
   const router = useRouter();
   const [open, setOpen] = useState(false);
@@ -52,10 +54,10 @@ export default function AdminShell({ profile, children }) {
   const sidebar = (
     <div className="flex h-full flex-col">
       <div className="flex items-center gap-2 border-b border-slate-800 px-4 py-4">
-        <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-white text-xs font-bold text-brand-900">
-          EV
+        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-white text-xs font-bold text-brand-900">
+          {storeInitials(shop.name)}
         </span>
-        <span className="text-sm font-bold text-white">ELYF EVSPARE</span>
+        <span className="truncate text-sm font-bold text-white">{shop.name}</span>
       </div>
 
       <nav className="flex-1 space-y-1 overflow-y-auto p-3">
@@ -110,7 +112,7 @@ export default function AdminShell({ profile, children }) {
         <button type="button" className="btn-ghost -ml-2" onClick={() => setOpen(true)} aria-label="Open menu">
           <Menu className="h-5 w-5" />
         </button>
-        <span className="text-sm font-bold">ELYF EVSPARE admin</span>
+        <span className="text-sm font-bold">{shop.name} admin</span>
       </header>
 
       {open && (

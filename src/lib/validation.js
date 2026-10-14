@@ -74,6 +74,7 @@ export const settingsSchema = z.object({
   store_name: z.string().trim().min(2).max(120),
   tagline: z.string().trim().max(120).optional().default(''),
   phone: z.string().trim().max(30),
+  phone2: z.string().trim().max(30).optional().default(''),
   whatsapp: z
     .string()
     .trim()

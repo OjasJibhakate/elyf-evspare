@@ -1,4 +1,4 @@
-# Security plan — ELYF EVSPARE
+# Security plan — Shri Ashapura Auto Part EV
 
 An online store gets attacked for three reasons: someone wants free products, someone
 wants customer data, or someone wants to break the site. This document lists exactly how

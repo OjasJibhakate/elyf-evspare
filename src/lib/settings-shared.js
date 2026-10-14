@@ -14,6 +14,8 @@ export const settingsDefaults = {
     tagline: storeDefaults.tagline,
     phone: storeDefaults.phone,
     phoneRaw: storeDefaults.phoneRaw,
+    phone2: storeDefaults.phone2,
+    phone2Raw: storeDefaults.phone2Raw,
     whatsapp: storeDefaults.whatsapp,
     email: storeDefaults.email,
     address: storeDefaults.address,

@@ -71,9 +71,16 @@ export default function SettingsForm({ action, settings }) {
                 <input name="phone" defaultValue={store.phone} className="input" />
               </Field>
               <Field
+                label="Second phone"
+                error={errors.phone2}
+                hint="Optional. Shown in the footer and on the contact page."
+              >
+                <input name="phone2" defaultValue={store.phone2 || ''} className="input" />
+              </Field>
+              <Field
                 label="WhatsApp number *"
                 error={errors.whatsapp}
-                hint="Digits only with country code — e.g. 919325880128."
+                hint="Digits only with country code — e.g. 919082248351."
               >
                 <input name="whatsapp" defaultValue={store.whatsapp} className="input" inputMode="numeric" required />
               </Field>

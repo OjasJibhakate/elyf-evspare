@@ -24,7 +24,7 @@ export function getOrder(id) {
 export function newOrderId() {
   const stamp = Date.now().toString(36).toUpperCase().slice(-6);
   const rand = Math.random().toString(36).toUpperCase().slice(2, 5);
-  return `ELYF-${stamp}${rand}`;
+  return `SAA-${stamp}${rand}`;
 }
 
 export function orderToWhatsApp(order, store) {

@@ -5,12 +5,18 @@ import { useState } from 'react';
 import { Menu, Phone, ShoppingCart, Truck, X, ShieldCheck, BadgeIndianRupee } from 'lucide-react';
 import SearchBox from '@/components/SearchBox';
 import AccountMenu from '@/components/AccountMenu';
+import { storeInitials } from '@/lib/config';
 import { useCart } from '@/context/CartContext';
 
 export default function Header({ categories = [], settings }) {
   const { count, openCart } = useCart();
   const [menuOpen, setMenuOpen] = useState(false);
-  const store = settings?.store || { name: 'ELYF EVSPARE', tagline: '', phone: '', phoneRaw: '' };
+  const store = settings?.store || {
+    name: 'Shri Ashapura Auto Part EV',
+    tagline: '',
+    phone: '',
+    phoneRaw: '',
+  };
 
   return (
     <>
@@ -41,8 +47,8 @@ export default function Header({ categories = [], settings }) {
             </button>
 
             <Link href="/" className="flex shrink-0 items-center gap-2">
-              <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-brand-800 text-sm font-bold text-white">
-                EV
+              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-brand-800 text-sm font-bold text-white">
+                {storeInitials(store.name)}
               </span>
               <span className="leading-tight">
                 <span className="block text-sm font-bold tracking-tight text-slate-900 sm:text-base">

@@ -1,11 +1,20 @@
 import Link from 'next/link';
 import { Mail, MapPin, MessageCircle, Phone, Truck, ShieldCheck, BadgeIndianRupee, Clock } from 'lucide-react';
-import { trustPoints } from '@/lib/config';
+import { trustPoints, storeInitials } from '@/lib/config';
 
 const trustIcons = [ShieldCheck, BadgeIndianRupee, Truck, Clock];
 
 export default function Footer({ categories = [], settings }) {
-  const store = settings?.store || { name: 'ELYF EVSPARE', phone: '', phoneRaw: '', email: '', address: '', whatsapp: '' };
+  const store = settings?.store || {
+    name: 'Shri Ashapura Auto Part EV',
+    phone: '',
+    phoneRaw: '',
+    phone2: '',
+    phone2Raw: '',
+    email: '',
+    address: '',
+    whatsapp: '',
+  };
   const points = settings?.trustPoints?.length ? settings.trustPoints : trustPoints;
   return (
     <footer className="mt-16 border-t border-slate-200 bg-slate-50">
@@ -30,8 +39,8 @@ export default function Footer({ categories = [], settings }) {
         <div className="grid gap-10 py-10 md:grid-cols-2 lg:grid-cols-4">
           <div>
             <div className="flex items-center gap-2">
-              <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-brand-800 text-sm font-bold text-white">
-                EV
+              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-brand-800 text-sm font-bold text-white">
+                {storeInitials(store.name)}
               </span>
               <span>
                 <span className="block text-sm font-bold text-slate-900">{store.name}</span>
@@ -106,6 +115,16 @@ export default function Footer({ categories = [], settings }) {
                   <Phone className="h-4 w-4 text-brand-800" /> {store.phone}
                 </a>
               </li>
+              {store.phone2Raw ? (
+                <li>
+                  <a
+                    href={`tel:+${store.phone2Raw}`}
+                    className="inline-flex items-center gap-2 hover:text-brand-800"
+                  >
+                    <Phone className="h-4 w-4 text-brand-800" /> {store.phone2}
+                  </a>
+                </li>
+              ) : null}
               <li>
                 <a href={`mailto:${store.email}`} className="inline-flex items-center gap-2 hover:text-brand-800">
                   <Mail className="h-4 w-4 text-brand-800" /> {store.email}

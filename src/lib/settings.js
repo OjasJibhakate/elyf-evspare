@@ -20,6 +20,8 @@ async function loadSettings() {
 
   const d = data.data;
   const whatsapp = normaliseWhatsapp(d.whatsapp) || fallback.store.whatsapp;
+  const phone = d.phone || fallback.store.phone;
+  const phone2 = d.phone2 || fallback.store.phone2 || '';
   const shipping = Array.isArray(d.shipping) && d.shipping.length ? d.shipping : fallback.shipping;
   const payments = Array.isArray(d.payments) && d.payments.length ? d.payments : fallback.payments;
 
@@ -27,8 +29,10 @@ async function loadSettings() {
     store: {
       name: d.store_name || fallback.store.name,
       tagline: d.tagline || fallback.store.tagline,
-      phone: d.phone || fallback.store.phone,
-      phoneRaw: whatsapp,
+      phone,
+      phoneRaw: normaliseWhatsapp(phone) || whatsapp,
+      phone2,
+      phone2Raw: normaliseWhatsapp(phone2),
       whatsapp,
       email: d.email || fallback.store.email,
       address: d.address || fallback.store.address,

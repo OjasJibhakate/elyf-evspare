@@ -11,6 +11,8 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { createClient } from '@supabase/supabase-js';
 import { loadEnv, confirmTarget, assertConfigured, root } from './_env.mjs';
+// Store identity comes from src/lib/config.js so there is one place to change it.
+import { store } from '../src/lib/config.js';
 
 const loaded = loadEnv();
 assertConfigured(loaded);
@@ -102,12 +104,13 @@ const { error: settingsError } = await db.from('site_settings').upsert(
   {
     id: 1,
     data: {
-      store_name: 'ELYF EVSPARE',
-      tagline: 'Electric Vehicle Spare Parts',
-      phone: '+91 93258 80128',
-      whatsapp: '919325880128',
-      email: 'ojasjibhakate2006@gmail.com',
-      address: 'India',
+      store_name: store.name,
+      tagline: store.tagline,
+      phone: store.phone,
+      phone2: store.phone2,
+      whatsapp: store.whatsapp,
+      email: store.email,
+      address: store.address,
       gst_default_rate: 0.18,
       gst_charger_rate: 0.05,
       store_open: true,

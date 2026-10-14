@@ -46,6 +46,9 @@ export default async function ContactPage() {
             <span>
               <span className="block text-sm font-bold text-slate-800">Call us</span>
               <span className="block text-sm text-slate-600">{store.phone}</span>
+              {store.phone2Raw ? (
+                <span className="mt-0.5 block text-sm text-slate-600">{store.phone2}</span>
+              ) : null}
               <span className="mt-1 block text-xs text-slate-500">Mon–Sat, 10am–7pm</span>
             </span>
           </a>

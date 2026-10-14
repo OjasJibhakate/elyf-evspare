@@ -165,7 +165,7 @@ if (good.status === 201) {
   const wrong = await fetch(`${BASE}/order/${'0'.repeat(8)}-0000-0000-0000-000000000000`);
   check('a wrong token shows not-found', wrong.status === 404, `status ${wrong.status}`);
 
-  const guess = await fetch(`${BASE}/order/ELYF-0000-AAAA`);
+  const guess = await fetch(`${BASE}/order/SAA-0000-AAAA`);
   check('guessing an order number does not work', guess.status === 404, `status ${guess.status}`);
 
   await db.from('orders').delete().eq('id', good.data.id);
