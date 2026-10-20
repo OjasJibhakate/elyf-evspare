@@ -13,6 +13,7 @@ import {
   ShoppingBag,
   Settings,
   Users,
+  UserRound,
   ExternalLink,
   LogOut,
   Menu,
@@ -29,6 +30,7 @@ const NAV = [
   { href: '/admin/orders', label: 'Orders', icon: ShoppingBag },
   { href: '/admin/settings', label: 'Settings', icon: Settings },
   { href: '/admin/team', label: 'Team', icon: Users, adminOnly: true },
+  { href: '/admin/account', label: 'My account', icon: UserRound },
 ];
 
 export default function AdminShell({ profile, store, children }) {
